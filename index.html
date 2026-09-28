@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume Optimizer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1a1f3a 100%);
+            color: #f1f5f9; min-height: 100vh; padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header {
+            text-align: center; margin-bottom: 40px; padding: 30px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 12px;
+        }
+        header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        header p { font-size: 1.1em; opacity: 0.9; }
+        .content { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        .panel { background: #1e293b; border-radius: 12px; padding: 30px; border: 1px solid #334155; }
+        h2 { color: #6366f1; margin-bottom: 15px; font-size: 1.3em; }
+        textarea {
+            width: 100%; padding: 15px; background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #334155; border-radius: 8px; color: #f1f5f9;
+            font-size: 0.95em; resize: vertical; font-family: 'Courier New', monospace; margin-bottom: 15px;
+        }
+        textarea:focus { outline: none; border-color: #6366f1; background: rgba(99, 102, 241, 0.1); }
+        .button-group { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 20px; }
+        button {
+            padding: 12px; border: none; border-radius: 8px; font-weight: 600;
+            cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; font-size: 0.9em;
+        }
+        .btn-perfect { background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 15px; }
+        .btn-perfect:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(16, 185, 129, 0.3); }
+        .btn-optimize { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 15px; }
+        .btn-optimize:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3); }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #334155; flex-wrap: wrap; }
+        .tab-btn {
+            padding: 10px 15px; background: none; border: none; color: #cbd5e1;
+            cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.3s ease; font-weight: 600;
+        }
+        .tab-btn.active { color: #6366f1; border-bottom-color: #6366f1; }
+        .tab { display: none; }
+        .tab.active { display: block; }
+        .result-box {
+            background: rgba(255, 255, 255, 0.05); border: 1px solid #334155; border-radius: 8px;
+            padding: 20px; max-height: 400px; overflow-y: auto; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word;
+        }
+        .spinner {
+            display: none; position: fixed; top: 50%; left: 50%; width: 40px; height: 40px;
+            border: 4px solid rgba(99, 102, 241, 0.2); border-top-color: #6366f1; border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (max-width: 1024px) { .content { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 AI Resume Optimizer</h1>
+            <p>Get your resume optimized with AI</p>
+        </header>
+
+        <div class="content">
+            <div class="panel">
+                <h2>📄 Resume</h2>
+                <textarea id="resumeText" placeholder="Paste your resume here..." rows="10"></textarea>
+                <h2>💼 Job Description</h2>
+                <textarea id="jobDescription" placeholder="Paste job description here..." rows="8"></textarea>
+                
+                <div class="button-group">
+                    <!-- Professional Title for the 100/100 feature -->
+                    <button class="btn-perfect" onclick="processSingleReq('perfect-resume')">🏆 Auto-Tailor to Job (Max ATS)</button>
+                    
+                    <!-- Single click generates Optimized, Score, and Letter concurrently -->
+                    <button class="btn-optimize" onclick="generateAll()">✨ Optimize, Score & Cover Letter</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>📋 Results</h2>
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab(event, 'perfect-resume')">Perfect 100</button>
+                    <button class="tab-btn" onclick="switchTab(event, 'optimize')">Optimized</button>
+                    <button class="tab-btn" onclick="switchTab(event, 'fit-score')">Score</button>
+                    <button class="tab-btn" onclick="switchTab(event, 'cover-letter')">Letter</button>
+                </div>
+                <div id="perfect-resume" class="tab active"><div class="result-box">Results will appear here...</div></div>
+                <div id="optimize" class="tab"><div class="result-box">Results will appear here...</div></div>
+                <div id="fit-score" class="tab"><div class="result-box">Results will appear here...</div></div>
+                <div id="cover-letter" class="tab"><div class="result-box">Results will appear here...</div></div>
+            </div>
+        </div>
+    </div>
+    <div class="spinner" id="spinner"></div>
+
+    <script>
+        const API_URL = '/api';
+
+        // Handles the single "Auto-Tailor" request
+        async function processSingleReq(endpoint) {
+            const resume = document.getElementById('resumeText').value;
+            const job = document.getElementById('jobDescription').value;
+            if (!resume || !job) { alert('❌ Please fill both Resume and Job Description'); return; }
+
+            document.getElementById('spinner').style.display = 'block';
+            try {
+                const res = await fetch(`${API_URL}/${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ resumeText: resume, jobDescription: job })
+                });
+
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                
+                document.querySelector(`#${endpoint} .result-box`).textContent = data.perfect_resume;
+                switchTabDirect(endpoint);
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
+            }
+            document.getElementById('spinner').style.display = 'none';
+        }
+
+        // Handles 3 requests at the EXACT same time (Parallel Processing for speed)
+        async function generateAll() {
+            const resume = document.getElementById('resumeText').value;
+            const job = document.getElementById('jobDescription').value;
+            if (!resume || !job) { alert('❌ Please fill both Resume and Job Description'); return; }
+
+            document.getElementById('spinner').style.display = 'block';
+            try {
+                const reqBody = {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ resumeText: resume, jobDescription: job })
+                };
+
+                // Request all 3 endpoints concurrently
+                const [optRes, scoreRes, letterRes] = await Promise.all([
+                    fetch(`${API_URL}/optimize`, reqBody).then(r => r.json()),
+                    fetch(`${API_URL}/fit-score`, reqBody).then(r => r.json()),
+                    fetch(`${API_URL}/cover-letter`, reqBody).then(r => r.json())
+                ]);
+
+                if (optRes.error) throw new Error(optRes.error);
+                if (scoreRes.error) throw new Error(scoreRes.error);
+                if (letterRes.error) throw new Error(letterRes.error);
+
+                // Populate all tabs simultaneously
+                document.querySelector('#optimize .result-box').textContent = optRes.optimized_resume;
+                document.querySelector('#fit-score .result-box').textContent = scoreRes.fit_score;
+                document.querySelector('#cover-letter .result-box').textContent = letterRes.cover_letter;
+                
+                // Switch view to the optimized tab
+                switchTabDirect('optimize');
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
+            }
+            document.getElementById('spinner').style.display = 'none';
+        }
+
+        function switchTab(event, tabName) {
+            event.preventDefault();
+            switchTabDirect(tabName);
+        }
+
+        function switchTabDirect(tabName) {
+            document.querySelectorAll('.tab, .tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            document.querySelector(`[onclick*="switchTab(event, '${tabName}')"]`).classList.add('active');
+        }
+    </script>
+</body>
+</html>
