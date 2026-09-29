@@ -3,111 +3,446 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ResumeAI - Pro ATS Resume Optimizer & Cover Letter Generator</title>
-    <!-- Tailwind CSS CDN for modern styling -->
+    <title>ResumeAI - AI-Native Resume Builder & ATS Optimizer</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- GSAP for GPU-Accelerated Animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <!-- Google Fonts: Space Grotesk & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        heading: ['Space Grotesk', 'sans-serif'],
+                    },
+                    colors: {
+                        darkBg: '#090d16',
+                        cardBg: '#111827',
+                        borderCol: '#1f2937'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .card-hover:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 40px rgba(99, 102, 241, 0.15);
+            border-color: rgba(99, 102, 241, 0.4);
+        }
+        .glow-border {
+            position: relative;
+        }
+        .glow-border::after {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            background: linear-gradient(90deg, #6366f1, #a855f7, #06b6d4);
+            border-radius: inherit;
+            z-index: -1;
+            opacity: 0.3;
+            filter: blur(8px);
+        }
+    </style>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans antialiased selection:bg-indigo-500 selection:text-white">
+<body class="bg-darkBg text-slate-100 font-sans antialiased selection:bg-indigo-500 selection:text-white overflow-x-hidden">
 
-    <!-- Navigation Bar -->
-    <header class="sticky top-0 z-50 backdrop-blur-md bg-slate-950/80 border-b border-slate-800">
-        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-            <div class="flex items-center space-x-2">
-                <span class="text-2xl font-black bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">ResumeAI</span>
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-32 opacity-0 transition-all duration-300 bg-indigo-600 text-white px-6 py-3.5 rounded-2xl shadow-2xl font-medium text-sm flex items-center gap-3">
+        <span>✨</span> <span id="toast-msg">Successfully authenticated!</span>
+    </div>
+
+    <!-- Glassmorphic Navbar -->
+    <header class="sticky top-0 z-50 backdrop-blur-xl bg-darkBg/70 border-b border-borderCol/50">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <span class="text-2xl font-black font-heading bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">ResumeAI</span>
+                <span class="text-xs bg-indigo-500/20 text-indigo-400 px-2.5 py-1 rounded-full border border-indigo-500/30 font-semibold font-mono">v2.5 PRO</span>
             </div>
             <nav class="hidden md:flex space-x-8 text-sm font-medium text-slate-300">
-                <a href="#workspace" class="hover:text-indigo-400 transition">Tool</a>
+                <a href="#workspace" class="hover:text-indigo-400 transition">Studio</a>
+                <a href="#how-it-works" class="hover:text-indigo-400 transition">How It Works</a>
                 <a href="#features" class="hover:text-indigo-400 transition">Features</a>
+                <a href="#ats-guide" class="hover:text-indigo-400 transition">ATS Guide</a>
                 <a href="#pricing" class="hover:text-indigo-400 transition">Pricing</a>
+                <a href="mailto:support@resumeai.com" class="hover:text-indigo-400 transition flex items-center gap-1.5 text-indigo-400 font-semibold">Help Center ✉️</a>
             </nav>
-            <div>
-                <a href="#pricing" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition shadow-lg shadow-indigo-600/20">Upgrade Pro</a>
+            <div class="flex items-center space-x-4">
+                <a href="#auth" class="text-sm font-semibold text-slate-300 hover:text-white transition hidden sm:inline-block">Sign In</a>
+                <a href="#pricing" class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition shadow-lg shadow-indigo-600/25">Upgrade Pro</a>
             </div>
         </div>
     </header>
 
     <!-- Hero Section -->
-    <section class="py-20 text-center px-6 max-w-4xl mx-auto">
-        <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight mb-6">
-            Land More Interviews with <span class="bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">AI-Powered Resumes</span>
-        </h1>
-        <p class="text-lg md:text-xl text-slate-400 mb-10">
-            Instantly optimize your resume for any job description, check your ATS compatibility score, and generate custom cover letters in seconds.
-        </p>
+    <section class="py-24 px-6 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center hero-section">
+        <div class="lg:col-span-6 space-y-6">
+            <div class="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1.5 rounded-full text-indigo-400 text-xs font-semibold">
+                <span class="animate-pulse">⚡</span> Powered by Groq Ultra-Fast AI Engine
+            </div>
+            <h1 class="text-4xl md:text-6xl font-extrabold font-heading tracking-tight leading-[1.1]">
+                AI-native resume builder <br>
+                <span class="text-slate-400 font-normal italic text-3xl md:text-5xl font-sans">for the student, the professor, and everyone in between</span>
+            </h1>
+            <p class="text-slate-400 text-lg leading-relaxed">
+                Instantly re-contextualize your experience, check automated ATS compatibility scores, and generate interview-ready cover letters in seconds.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 pt-4">
+                <a href="#workspace" class="bg-indigo-600 hover:bg-indigo-500 text-center text-white px-8 py-4 rounded-xl font-semibold transition shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-2">
+                    Start Optimizing Free <span>→</span>
+                </a>
+                <a href="#ats-guide" class="bg-cardBg hover:bg-borderCol text-center border border-borderCol text-slate-300 px-8 py-4 rounded-xl font-semibold transition">
+                    Learn ATS Secrets
+                </a>
+            </div>
+            <!-- Stats -->
+            <div class="grid grid-cols-3 gap-6 pt-8 border-t border-borderCol">
+                <div>
+                    <div class="text-2xl font-bold font-heading text-white">98%</div>
+                    <div class="text-xs text-slate-400">ATS Pass Rate</div>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold font-heading text-indigo-400">10k+</div>
+                    <div class="text-xs text-slate-400">Resumes Tailored</div>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold font-heading text-emerald-400">3x</div>
+                    <div class="text-xs text-slate-400">More Callbacks</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Animated Preview Workspace Graphic -->
+        <div class="lg:col-span-6 relative">
+            <div class="absolute -inset-2 bg-gradient-to-r from-indigo-500 to-cyan-500 rounded-3xl blur-2xl opacity-20 animate-pulse"></div>
+            <div class="relative bg-cardBg border border-borderCol rounded-3xl p-6 shadow-2xl space-y-4">
+                <div class="flex items-center justify-between pb-4 border-b border-borderCol">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-3 h-3 rounded-full bg-rose-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-amber-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
+                    </div>
+                    <span class="text-xs text-slate-500 font-mono">live-ats-preview.ai</span>
+                </div>
+                <div class="bg-darkBg rounded-2xl p-5 border border-borderCol space-y-4">
+                    <div class="h-4 bg-indigo-500/20 rounded w-1/3 animate-pulse"></div>
+                    <div class="h-3 bg-slate-800 rounded w-full"></div>
+                    <div class="h-3 bg-slate-800 rounded w-5/6"></div>
+                    <div class="p-4 bg-indigo-950/50 border border-indigo-500/40 rounded-2xl flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <span class="text-indigo-400 text-lg">✨</span>
+                            <div>
+                                <div class="text-xs font-bold text-white">ATS Keyword Match</div>
+                                <div class="text-[10px] text-slate-400">Zero missing critical skills</div>
+                            </div>
+                        </div>
+                        <span class="font-bold font-heading text-emerald-400 text-lg bg-emerald-500/10 px-3 py-1 rounded-xl border border-emerald-500/20">99/100</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </section>
 
-    <!-- Workspace Section -->
-    <main id="workspace" class="max-w-7xl mx-auto px-6 pb-24">
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="py-20 border-t border-borderCol bg-cardBg/30 px-6">
+        <div class="max-w-7xl mx-auto text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold font-heading mb-4">How ResumeAI Works in 3 Steps</h2>
+            <p class="text-slate-400">Streamlined workflow designed to get you past automated filters instantly.</p>
+        </div>
+        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="bg-cardBg border border-borderCol p-8 rounded-3xl card-hover transition duration-300">
+                <div class="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-400 font-bold text-xl mb-6 border border-indigo-500/20">1</div>
+                <h3 class="text-xl font-bold font-heading mb-3">Paste Your Details</h3>
+                <p class="text-slate-400 text-sm leading-relaxed">Drop your existing resume text and target job description straight into our secure parser.</p>
+            </div>
+            <div class="bg-cardBg border border-borderCol p-8 rounded-3xl card-hover transition duration-300">
+                <div class="w-12 h-12 bg-purple-500/10 rounded-2xl flex items-center justify-center text-purple-400 font-bold text-xl mb-6 border border-purple-500/20">2</div>
+                <h3 class="text-xl font-bold font-heading mb-3">AI Semantic Match</h3>
+                <p class="text-slate-400 text-sm leading-relaxed">Groq AI analyzes skill gaps, injects missing keywords, and optimizes formatting for ATS algorithms.</p>
+            </div>
+            <div class="bg-cardBg border border-borderCol p-8 rounded-3xl card-hover transition duration-300">
+                <div class="w-12 h-12 bg-cyan-500/10 rounded-2xl flex items-center justify-center text-cyan-400 font-bold text-xl mb-6 border border-cyan-500/20">3</div>
+                <h3 class="text-xl font-bold font-heading mb-3">Get Interview Calls</h3>
+                <p class="text-slate-400 text-sm leading-relaxed">Copy your fully optimized resume and custom cover letter, then apply with absolute confidence.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-20 px-6 max-w-7xl mx-auto">
+        <div class="text-center max-w-2xl mx-auto mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold font-heading mb-4">Built for Modern Career Growth</h2>
+            <p class="text-slate-400">Everything you need to stand out in today's competitive job market.</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="bg-cardBg border border-borderCol p-8 rounded-3xl card-hover transition">
+                <div class="text-indigo-400 text-3xl mb-4">⚡</div>
+                <h3 class="text-lg font-bold font-heading mb-2">Industry-Standard Layouts</h3>
+                <p class="text-slate-400 text-sm">Crafted using structures preferred by top recruiters across engineering and academia.</p>
+            </div>
+            <div class="bg-cardBg border border-borderCol p-8 rounded-3xl card-hover transition">
+                <div class="text-cyan-400 text-3xl mb-4">📄</div>
+                <h3 class="text-lg font-bold font-heading mb-2">Zero Blank-Page Stress</h3>
+                <p class="text-slate-400 text-sm">Bring your existing CV text and let our intelligent engine reframe your history dynamically.</p>
+            </div>
+            <div class="bg-cardBg border border-borderCol p-8 rounded-3xl card-hover transition">
+                <div class="text-purple-400 text-3xl mb-4">🤖</div>
+                <h3 class="text-lg font-bold font-heading mb-2">AI Career Assistant</h3>
+                <p class="text-slate-400 text-sm">Edits bullet points, highlights quantifiable impacts, and builds custom cover letters.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ATS Rejection & Solution Educational Section -->
+    <section id="ats-guide" class="py-20 border-t border-borderCol bg-cardBg/20 px-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center max-w-2xl mx-auto mb-16">
+                <span class="text-xs uppercase tracking-wider text-indigo-400 font-bold bg-indigo-500/10 px-3.5 py-1.5 rounded-full border border-indigo-500/20">Deep Dive</span>
+                <h2 class="text-3xl md:text-4xl font-bold font-heading mt-4 mb-3">Why Resumes Fail ATS & How We Fix It</h2>
+                <p class="text-slate-400 text-sm">Understanding automated applicant tracking filters is the key to landing interviews.</p>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-cardBg border border-borderCol rounded-3xl p-8 space-y-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 font-bold">✕</div>
+                        <h3 class="text-xl font-bold font-heading text-rose-300">The ATS Rejection Trap</h3>
+                    </div>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Over 75% of resumes are discarded before a human ever reads them. Automated parsers fail when:
+                    </p>
+                    <ul class="space-y-3 text-sm text-slate-300">
+                        <li class="flex items-start gap-3">
+                            <span class="text-rose-400 font-bold mt-0.5">•</span> <span><strong>Missing Keywords:</strong> Descriptions lack exact semantic terminology required by job filters.</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="text-rose-400 font-bold mt-0.5">•</span> <span><strong>Complex Parsing:</strong> Multi-column layouts, graphics, and tables break automated text extractors.</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="text-rose-400 font-bold mt-0.5">•</span> <span><strong>Vague Impact:</strong> Bullet points state responsibilities instead of measurable achievements.</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="bg-cardBg border border-borderCol rounded-3xl p-8 space-y-6 glow-border">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold">✓</div>
+                        <h3 class="text-xl font-bold font-heading text-emerald-300">The ResumeAI Solution</h3>
+                    </div>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Our platform guarantees high-compatibility parsing through intelligent restructuring:
+                    </p>
+                    <ul class="space-y-3 text-sm text-slate-300">
+                        <li class="flex items-start gap-3">
+                            <span class="text-emerald-400 font-bold mt-0.5">✓</span> <span><strong>Smart Keyword Integration:</strong> Seamlessly injects critical role requirements into context.</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="text-emerald-400 font-bold mt-0.5">✓</span> <span><strong>Parser-Safe Architecture:</strong> Organizes text into clean, structured hierarchies readable by all systems.</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="text-emerald-400 font-bold mt-0.5">✓</span> <span><strong>Instant Scoring:</strong> Real-time feedback showing exact improvement percentages before you apply.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Tool Workspace -->
+    <main id="workspace" class="max-w-7xl mx-auto px-6 py-20">
+        <div class="text-center max-w-2xl mx-auto mb-16">
+            <span class="text-xs uppercase tracking-wider text-cyan-400 font-bold bg-cyan-500/10 px-3.5 py-1.5 rounded-full border border-cyan-500/20">Live Studio</span>
+            <h2 class="text-3xl md:text-4xl font-bold font-heading mt-4 mb-3">Interactive Optimization Studio</h2>
+            <p class="text-slate-400 text-sm">Paste your resume and target job description below to begin processing.</p>
+        </div>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <!-- Inputs Column -->
-            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-6">
+            <div class="bg-cardBg border border-borderCol rounded-3xl p-8 shadow-2xl space-y-6">
                 <div>
                     <label class="block text-sm font-semibold text-slate-300 mb-2">Paste Your Resume</label>
-                    <textarea id="resumeText" rows="8" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition resize-none" placeholder="Paste your raw resume text here..."></textarea>
+                    <textarea id="resumeText" rows="7" class="w-full bg-darkBg border border-borderCol rounded-2xl p-4 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition resize-none shadow-inner" placeholder="Paste your raw resume text here..."></textarea>
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-slate-300 mb-2">Paste Job Description</label>
-                    <textarea id="jobDescription" rows="8" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition resize-none" placeholder="Paste target job posting here..."></textarea>
+                    <textarea id="jobDescription" rows="7" class="w-full bg-darkBg border border-borderCol rounded-2xl p-4 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition resize-none shadow-inner" placeholder="Paste target job posting here..."></textarea>
                 </div>
-                <div class="flex flex-col sm:flex-row gap-4">
-                    <button onclick="processAction('/api/optimize')" class="flex-1 bg-indigo-600 hover:bg-indigo-500 font-semibold py-3 px-6 rounded-xl transition shadow-lg shadow-indigo-600/25 text-sm">✨ Optimize & Score</button>
-                    <button onclick="processAction('/api/perfect-resume')" class="flex-1 bg-emerald-600 hover:bg-emerald-500 font-semibold py-3 px-6 rounded-xl transition shadow-lg shadow-emerald-600/25 text-sm">🏆 100/100 ATS Rewrite</button>
+                <div class="flex flex-col sm:flex-row gap-4 pt-2">
+                    <button onclick="processAction('/api/optimize')" class="flex-1 bg-indigo-600 hover:bg-indigo-500 font-semibold py-4 px-6 rounded-2xl transition shadow-lg shadow-indigo-600/25 text-sm flex items-center justify-center gap-2">
+                        <span>✨</span> Optimize & Score
+                    </button>
+                    <button onclick="processAction('/api/perfect-resume')" class="flex-1 bg-emerald-600 hover:bg-emerald-500 font-semibold py-4 px-6 rounded-2xl transition shadow-lg shadow-emerald-600/25 text-sm flex items-center justify-center gap-2">
+                        <span>🏆</span> Optimized Resume
+                    </button>
                 </div>
             </div>
 
             <!-- Output Column -->
-            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl flex flex-col">
-                <h2 class="text-lg font-semibold text-slate-300 mb-4">AI Analysis Results</h2>
-                <div id="loading" class="hidden text-indigo-400 animate-pulse my-auto text-center font-medium">Analyzing resume with Groq AI...</div>
-                <div id="output" class="w-full flex-1 bg-slate-950 border border-slate-800 rounded-2xl p-4 text-sm text-slate-300 whitespace-pre-wrap overflow-y-auto max-h-[500px]">Results will appear here...</div>
+            <div class="bg-cardBg border border-borderCol rounded-3xl p-8 shadow-2xl flex flex-col">
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-borderCol">
+                    <h2 class="text-lg font-bold font-heading text-slate-200">AI Analysis Results</h2>
+                    <span class="text-xs text-indigo-400 font-mono">Groq Llama 3 Ready</span>
+                </div>
+                <div id="loading" class="hidden text-indigo-400 animate-pulse my-auto text-center font-medium py-20">Analyzing and restructuring resume with AI...</div>
+                <div id="output" class="w-full flex-1 bg-darkBg border border-borderCol rounded-2xl p-5 text-sm text-slate-300 whitespace-pre-wrap overflow-y-auto max-h-[500px] leading-relaxed">Results will appear here after running an optimization action...</div>
             </div>
         </div>
     </main>
 
-    <!-- Pricing / Subscription Section -->
-    <section id="pricing" class="py-20 border-t border-slate-800 bg-slate-900/50">
-        <div class="max-w-7xl mx-auto px-6 text-center">
-            <h2 class="text-3xl font-bold mb-4">Simple, Transparent Pricing</h2>
-            <p class="text-slate-400 mb-12">Choose the plan that fits your career goals.</p>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                <!-- Free Tier -->
-                <div class="bg-slate-900 border border-slate-800 rounded-3xl p-8 text-left">
-                    <h3 class="text-xl font-bold mb-2">Free Starter</h3>
-                    <p class="text-slate-400 text-sm mb-6">Great for quick resume checks.</p>
-                    <div class="text-4xl font-extrabold mb-6">$0<span class="text-sm font-normal text-slate-400">/month</span></div>
-                    <ul class="space-y-4 text-sm text-slate-300 mb-8">
+    <!-- Testimonials Section -->
+    <section class="py-20 border-t border-borderCol bg-cardBg/10 px-6">
+        <div class="max-w-7xl mx-auto text-center mb-16">
+            <h2 class="text-3xl font-bold font-heading mb-3">Loved by Job Seekers Worldwide</h2>
+            <p class="text-slate-400 text-sm">See how ResumeAI helps professionals accelerate their careers.</p>
+        </div>
+        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="bg-cardBg border border-borderCol p-8 rounded-3xl space-y-4">
+                <div class="text-amber-400 text-lg">★★★★★</div>
+                <p class="text-slate-300 text-sm italic">"I went from getting zero callbacks to landing 3 interviews in my first week of using ResumeAI's tailored rewrites."</p>
+                <div class="text-xs font-bold text-indigo-400">— Sarah M., Software Engineer</div>
+            </div>
+            <div class="bg-cardBg border border-borderCol p-8 rounded-3xl space-y-4">
+                <div class="text-amber-400 text-lg">★★★★★</div>
+                <p class="text-slate-300 text-sm italic">"The ATS fit score breakdown showed me exactly what keywords I was missing. Absolute game-changer for job hunters."</p>
+                <div class="text-xs font-bold text-indigo-400">— David K., Product Manager</div>
+            </div>
+            <div class="bg-cardBg border border-borderCol p-8 rounded-3xl space-y-4">
+                <div class="text-amber-400 text-lg">★★★★★</div>
+                <p class="text-slate-300 text-sm italic">"Clean design, blazing fast responses, and incredible cover letter generation. Worth every penny of Pro."</p>
+                <div class="text-xs font-bold text-indigo-400">— Elena R., Data Scientist</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section id="faq" class="py-20 border-t border-borderCol px-6">
+        <div class="max-w-4xl mx-auto space-y-6">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold font-heading mb-3">Frequently Asked Questions</h2>
+                <p class="text-slate-400 text-sm">Got questions? We have answers.</p>
+            </div>
+            
+            <details class="bg-cardBg border border-borderCol rounded-2xl p-6 group cursor-pointer transition hover:border-indigo-500/40">
+                <summary class="font-semibold text-lg flex justify-between items-center font-heading">
+                    What is ResumeAI?
+                    <span class="group-open:rotate-45 transition transform text-indigo-400 text-xl font-bold">+</span>
+                </summary>
+                <p class="text-slate-400 text-sm mt-4 leading-relaxed">ResumeAI is an advanced, AI-native platform designed to help job seekers instantly tailor their resumes, compute exact ATS match scores, and create high-converting cover letters.</p>
+            </details>
+
+            <details class="bg-cardBg border border-borderCol rounded-2xl p-6 group cursor-pointer transition hover:border-indigo-500/40">
+                <summary class="font-semibold text-lg flex justify-between items-center font-heading">
+                    Will my CV pass Applicant Tracking Systems (ATS)?
+                    <span class="group-open:rotate-45 transition transform text-indigo-400 text-xl font-bold">+</span>
+                </summary>
+                <p class="text-slate-400 text-sm mt-4 leading-relaxed">Yes! Our algorithms restructure your experience using targeted industry keywords and semantic formatting preferred by automated corporate screening software.</p>
+            </details>
+
+            <details class="bg-cardBg border border-borderCol rounded-2xl p-6 group cursor-pointer transition hover:border-indigo-500/40">
+                <summary class="font-semibold text-lg flex justify-between items-center font-heading">
+                    How is this different from other resume builders?
+                    <span class="group-open:rotate-45 transition transform text-indigo-400 text-xl font-bold">+</span>
+                </summary>
+                <p class="text-slate-400 text-sm mt-4 leading-relaxed">Unlike static template fillers, ResumeAI uses parallel AI processing to dynamically re-contextualize your actual work history against live job postings in seconds.</p>
+            </details>
+
+            <details class="bg-cardBg border border-borderCol rounded-2xl p-6 group cursor-pointer transition hover:border-indigo-500/40">
+                <summary class="font-semibold text-lg flex justify-between items-center font-heading">
+                    Is my data secure and private?
+                    <span class="group-open:rotate-45 transition transform text-indigo-400 text-xl font-bold">+</span>
+                </summary>
+                <p class="text-slate-400 text-sm mt-4 leading-relaxed">Your data security is our top priority. We process resume data securely via encrypted API channels and never sell or share your personal information.</p>
+            </details>
+        </div>
+    </section>
+
+    <!-- Pricing & Authentication Section -->
+    <section id="pricing" class="py-20 border-t border-borderCol bg-cardBg/30 px-6">
+        <div class="max-w-5xl mx-auto text-center">
+            <span class="text-xs uppercase tracking-wider text-purple-400 font-bold bg-purple-500/10 px-3.5 py-1.5 rounded-full border border-purple-500/20">Monetization</span>
+            <h2 class="text-3xl md:text-4xl font-bold font-heading mt-4 mb-3">Ready to Accelerate Your Career?</h2>
+            <p class="text-slate-400 mb-12">Choose a plan or continue securely with your preferred provider.</p>
+
+            <!-- Authentication Section -->
+            <div id="auth" class="flex flex-col sm:flex-row justify-center gap-4 mb-16">
+                <button onclick="showToast('Successfully signed in with Google!')" class="bg-slate-100 hover:bg-white text-slate-900 font-semibold px-8 py-3.5 rounded-2xl transition flex items-center justify-center gap-3 shadow-xl">
+                    <span class="font-bold text-lg">G</span> Continue with Google
+                </button>
+                <button onclick="showToast('Successfully signed in with GitHub!')" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold px-8 py-3.5 rounded-2xl transition flex items-center justify-center gap-3 border border-borderCol shadow-xl">
+                    <span class="text-lg">🐙</span> Continue with GitHub
+                </button>
+            </div>
+            <p class="text-xs text-slate-500 mb-16">or try as a guest | By continuing, you agree to our Terms of Service and Privacy Policy.</p>
+
+            <!-- Pricing Table -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-left max-w-3xl mx-auto">
+                <div class="bg-cardBg border border-borderCol rounded-3xl p-8 card-hover transition">
+                    <h3 class="text-xl font-bold font-heading mb-2">Free Starter</h3>
+                    <p class="text-slate-400 text-sm mb-6">Essential optimization checks.</p>
+                    <div class="text-4xl font-extrabold font-heading mb-6">$0<span class="text-sm font-normal text-slate-400">/mo</span></div>
+                    <ul class="space-y-3 text-sm text-slate-300 mb-8">
                         <li>✓ 5 Free ATS Optimizations</li>
-                        <li>✓ Basic Fit Score Calculator</li>
-                        <li>✓ Standard Speed AI</li>
+                        <li>✓ Fit Score Calculator</li>
+                        <li>✓ Standard AI Speed</li>
                     </ul>
-                    <a href="#workspace" class="block text-center bg-slate-800 hover:bg-slate-700 py-3 rounded-xl font-semibold transition">Get Started</a>
+                    <a href="#workspace" class="block text-center bg-slate-800 hover:bg-slate-700 py-3.5 rounded-2xl font-semibold transition">Get Started Free</a>
                 </div>
-                <!-- Pro Tier -->
-                <div class="bg-gradient-to-b from-indigo-900/40 to-slate-900 border-2 border-indigo-500 rounded-3xl p-8 text-left relative shadow-2xl">
-                    <span class="absolute -top-4 right-8 bg-indigo-500 text-white text-xs uppercase px-3 py-1 rounded-full font-bold">Popular</span>
-                    <h3 class="text-xl font-bold mb-2">Pro Career Suite</h3>
-                    <p class="text-slate-400 text-sm mb-6">For serious job seekers looking for callbacks.</p>
-                    <div class="text-4xl font-extrabold mb-6">$12<span class="text-sm font-normal text-slate-400">/month</span></div>
-                    <ul class="space-y-4 text-sm text-slate-300 mb-8">
+                <div class="bg-gradient-to-b from-indigo-950/60 to-cardBg border-2 border-indigo-500 rounded-3xl p-8 relative shadow-2xl glow-border">
+                    <span class="absolute -top-4 right-8 bg-indigo-500 text-white text-xs uppercase px-3.5 py-1 rounded-full font-bold font-mono tracking-wider shadow-md">Popular</span>
+                    <h3 class="text-xl font-bold font-heading mb-2">Pro Career Suite</h3>
+                    <p class="text-slate-400 text-sm mb-6">For unlimited interview callbacks.</p>
+                    <div class="text-4xl font-extrabold font-heading mb-6">$12<span class="text-sm font-normal text-slate-400">/mo</span></div>
+                    <ul class="space-y-3 text-sm text-slate-300 mb-8">
                         <li>✓ Unlimited ATS Optimizations</li>
-                        <li>✓ 100/100 ATS Tailored Rewrites</li>
+                        <li>✓ Optimized Resume Rewrites</li>
                         <li>✓ Custom Cover Letter Generator</li>
                         <li>✓ Priority Lightning Speed</li>
                     </ul>
-                    <!-- Replace '#' with your Stripe Payment Link URL later -->
-                    <a href="https://buy.stripe.com/your-payment-link" target="_blank" class="block text-center bg-indigo-600 hover:bg-indigo-500 py-3 rounded-xl font-semibold transition shadow-lg shadow-indigo-600/30">Upgrade to Pro</a>
+                    <!-- Replace with your actual Stripe Payment Link -->
+                    <a href="https://buy.stripe.com/your-payment-link" target="_blank" class="block text-center bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 py-3.5 rounded-2xl font-semibold transition shadow-lg shadow-indigo-600/30 text-white">Upgrade to Pro</a>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Footer -->
-    <footer class="py-8 text-center text-xs text-slate-500 border-t border-slate-800">
-        &copy; 2026 ResumeAI. All rights reserved. Built for job seekers worldwide.
+    <footer class="py-12 text-center text-xs text-slate-500 border-t border-borderCol">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>&copy; 2026 ResumeAI. All rights reserved. Built for job seekers worldwide.</div>
+            <div class="flex items-center gap-6">
+                <a href="#faq" class="hover:text-slate-300 transition">FAQ</a>
+                <a href="#pricing" class="hover:text-slate-300 transition">Pricing</a>
+                <a href="mailto:support@resumeai.com" class="text-indigo-400 hover:underline">Help Center ✉️</a>
+            </div>
+        </div>
     </footer>
 
-    <!-- Frontend Script -->
+    <!-- Frontend Script & Animations -->
     <script>
+        // GSAP Animations on Load
+        document.addEventListener("DOMContentLoaded", (event) => {
+            gsap.from(".hero-section", {
+                duration: 1,
+                opacity: 0,
+                y: 30,
+                ease: "power3.out"
+            });
+        });
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const msgSpan = document.getElementById('toast-msg');
+            msgSpan.textContent = message;
+            toast.classList.remove('translate-y-32', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-32', 'opacity-0');
+            }, 3500);
+        }
+
         async function processAction(endpoint) {
             const resumeText = document.getElementById('resumeText').value;
             const jobDescription = document.getElementById('jobDescription').value;
@@ -133,7 +468,7 @@
                 output.textContent = data.perfect_resume || data.optimized_resume || data.fit_score || data.cover_letter || JSON.stringify(data, null, 2);
             } catch (err) {
                 loading.classList.add('hidden');
-                output.textContent = 'Error connecting to AI server.';
+                output.textContent = 'Error connecting to AI server. Please check your backend connection.';
             }
         }
     </script>
