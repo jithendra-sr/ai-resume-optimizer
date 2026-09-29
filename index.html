@@ -71,10 +71,12 @@
                 <a href="#features" class="hover:text-indigo-400 transition">Features</a>
                 <a href="#ats-guide" class="hover:text-indigo-400 transition">ATS Guide</a>
                 <a href="#pricing" class="hover:text-indigo-400 transition">Pricing</a>
-                <a href="mailto:support@resumeai.com" class="hover:text-indigo-400 transition flex items-center gap-1.5 text-indigo-400 font-semibold">Help Center ✉️</a>
+                <!-- Change 'your-email@gmail.com' to your actual Gmail address -->
+                <a href="mailto:your-email@gmail.com?subject=ResumeAI%20Help%20Center%20Inquiry" class="hover:text-indigo-400 transition flex items-center gap-1.5 text-indigo-400 font-semibold">Help Center ✉️</a>
             </nav>
             <div class="flex items-center space-x-4">
-                <a href="#auth" class="text-sm font-semibold text-slate-300 hover:text-white transition hidden sm:inline-block">Sign In</a>
+                <span id="nav-user-status" class="text-xs bg-slate-800 text-slate-400 px-3 py-1.5 rounded-xl border border-slate-700 font-semibold hidden sm:inline-block">Not Signed In</span>
+                <button onclick="logoutUser()" id="logout-btn" class="text-xs bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 px-3 py-1.5 rounded-xl border border-rose-500/30 font-semibold transition hidden">Sign Out</button>
                 <a href="#pricing" class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition shadow-lg shadow-indigo-600/25">Upgrade Pro</a>
             </div>
         </div>
@@ -158,8 +160,8 @@
         <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
             <div class="bg-cardBg border border-borderCol p-8 rounded-3xl card-hover transition duration-300">
                 <div class="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-400 font-bold text-xl mb-6 border border-indigo-500/20">1</div>
-                <h3 class="text-xl font-bold font-heading mb-3">Paste Your Details</h3>
-                <p class="text-slate-400 text-sm leading-relaxed">Drop your existing resume text and target job description straight into our secure parser.</p>
+                <h3 class="text-xl font-bold font-heading mb-3">Sign In & Get Credits</h3>
+                <p class="text-slate-400 text-sm leading-relaxed">Sign in with Google or GitHub to unlock your 3 free resume optimization checks.</p>
             </div>
             <div class="bg-cardBg border border-borderCol p-8 rounded-3xl card-hover transition duration-300">
                 <div class="w-12 h-12 bg-purple-500/10 rounded-2xl flex items-center justify-center text-purple-400 font-bold text-xl mb-6 border border-purple-500/20">2</div>
@@ -253,70 +255,64 @@
         </div>
     </section>
 
-    <!-- Main Tool Workspace -->
-    <main id="workspace" class="max-w-7xl mx-auto px-6 py-20">
+    <!-- Main Tool Workspace (Gated) -->
+    <main id="workspace" class="max-w-7xl mx-auto px-6 py-20 relative">
         <div class="text-center max-w-2xl mx-auto mb-16">
             <span class="text-xs uppercase tracking-wider text-cyan-400 font-bold bg-cyan-500/10 px-3.5 py-1.5 rounded-full border border-cyan-500/20">Live Studio</span>
             <h2 class="text-3xl md:text-4xl font-bold font-heading mt-4 mb-3">Interactive Optimization Studio</h2>
-            <p class="text-slate-400 text-sm">Paste your resume and target job description below to begin processing.</p>
+            <p class="text-slate-400 text-sm">Status: <strong><span id="credits-display" class="text-indigo-400 font-bold">Locked (Sign In Required)</span></strong></p>
         </div>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- Inputs Column -->
-            <div class="bg-cardBg border border-borderCol rounded-3xl p-8 shadow-2xl space-y-6">
-                <div>
-                    <label class="block text-sm font-semibold text-slate-300 mb-2">Paste Your Resume</label>
-                    <textarea id="resumeText" rows="7" class="w-full bg-darkBg border border-borderCol rounded-2xl p-4 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition resize-none shadow-inner" placeholder="Paste your raw resume text here..."></textarea>
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-slate-300 mb-2">Paste Job Description</label>
-                    <textarea id="jobDescription" rows="7" class="w-full bg-darkBg border border-borderCol rounded-2xl p-4 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition resize-none shadow-inner" placeholder="Paste target job posting here..."></textarea>
-                </div>
-                <div class="flex flex-col sm:flex-row gap-4 pt-2">
-                    <button onclick="processAction('/api/optimize')" class="flex-1 bg-indigo-600 hover:bg-indigo-500 font-semibold py-4 px-6 rounded-2xl transition shadow-lg shadow-indigo-600/25 text-sm flex items-center justify-center gap-2">
-                        <span>✨</span> Optimize & Score
+
+        <div class="relative">
+            <!-- VISUAL LOCK OVERLAY (Forces Login) -->
+            <div id="workspace-lock" class="absolute inset-0 bg-darkBg/95 backdrop-blur-md z-30 flex flex-col items-center justify-center text-center p-8 rounded-3xl border-2 border-indigo-500/40 shadow-2xl">
+                <div class="w-16 h-16 bg-indigo-500/10 border border-indigo-500/30 rounded-2xl flex items-center justify-center text-indigo-400 text-3xl mb-4 animate-bounce">🔒</div>
+                <h3 class="text-2xl font-bold font-heading mb-2">Authentication Mandatory</h3>
+                <p class="text-slate-400 text-sm max-w-md mb-6">You must sign in with Google or GitHub to unlock your 3 free resume optimization checks and access the studio.</p>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <button onclick="loginUser('Google')" class="bg-slate-100 hover:bg-white text-slate-900 font-semibold px-6 py-3 rounded-xl transition flex items-center gap-2 shadow-lg">
+                        <span class="font-bold">G</span> Sign in with Google
                     </button>
-                    <button onclick="processAction('/api/perfect-resume')" class="flex-1 bg-emerald-600 hover:bg-emerald-500 font-semibold py-4 px-6 rounded-2xl transition shadow-lg shadow-emerald-600/25 text-sm flex items-center justify-center gap-2">
-                        <span>🏆</span> Optimized Resume
+                    <button onclick="loginUser('GitHub')" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold px-6 py-3 rounded-xl transition flex items-center gap-2 border border-borderCol shadow-lg">
+                        <span>🐙</span> Sign in with GitHub
                     </button>
                 </div>
             </div>
 
-            <!-- Output Column -->
-            <div class="bg-cardBg border border-borderCol rounded-3xl p-8 shadow-2xl flex flex-col">
-                <div class="flex items-center justify-between mb-4 pb-3 border-b border-borderCol">
-                    <h2 class="text-lg font-bold font-heading text-slate-200">AI Analysis Results</h2>
-                    <span class="text-xs text-indigo-400 font-mono">Groq Llama 3 Ready</span>
+            <!-- Workspace Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Inputs Column -->
+                <div class="bg-cardBg border border-borderCol rounded-3xl p-8 shadow-2xl space-y-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-300 mb-2">Paste Your Resume</label>
+                        <textarea id="resumeText" rows="7" class="w-full bg-darkBg border border-borderCol rounded-2xl p-4 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition resize-none shadow-inner" placeholder="Paste your raw resume text here..."></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-300 mb-2">Paste Job Description</label>
+                        <textarea id="jobDescription" rows="7" class="w-full bg-darkBg border border-borderCol rounded-2xl p-4 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition resize-none shadow-inner" placeholder="Paste target job posting here..."></textarea>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-4 pt-2">
+                        <button onclick="processAction('/api/optimize')" class="flex-1 bg-indigo-600 hover:bg-indigo-500 font-semibold py-4 px-6 rounded-2xl transition shadow-lg shadow-indigo-600/25 text-sm flex items-center justify-center gap-2">
+                            <span>✨</span> Optimize & Score
+                        </button>
+                        <button onclick="processAction('/api/perfect-resume')" class="flex-1 bg-emerald-600 hover:bg-emerald-500 font-semibold py-4 px-6 rounded-2xl transition shadow-lg shadow-emerald-600/25 text-sm flex items-center justify-center gap-2">
+                            <span>🏆</span> Optimized Resume
+                        </button>
+                    </div>
                 </div>
-                <div id="loading" class="hidden text-indigo-400 animate-pulse my-auto text-center font-medium py-20">Analyzing and restructuring resume with AI...</div>
-                <div id="output" class="w-full flex-1 bg-darkBg border border-borderCol rounded-2xl p-5 text-sm text-slate-300 whitespace-pre-wrap overflow-y-auto max-h-[500px] leading-relaxed">Results will appear here after running an optimization action...</div>
+
+                <!-- Output Column -->
+                <div class="bg-cardBg border border-borderCol rounded-3xl p-8 shadow-2xl flex flex-col">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-borderCol">
+                        <h2 class="text-lg font-bold font-heading text-slate-200">AI Analysis Results</h2>
+                        <span class="text-xs text-indigo-400 font-mono">Groq Llama 3 Ready</span>
+                    </div>
+                    <div id="loading" class="hidden text-indigo-400 animate-pulse my-auto text-center font-medium py-20">Analyzing and restructuring resume with AI...</div>
+                    <div id="output" class="w-full flex-1 bg-darkBg border border-borderCol rounded-2xl p-5 text-sm text-slate-300 whitespace-pre-wrap overflow-y-auto max-h-[500px] leading-relaxed">Results will appear here after running an optimization action...</div>
+                </div>
             </div>
         </div>
     </main>
-
-    <!-- Testimonials Section -->
-    <section class="py-20 border-t border-borderCol bg-cardBg/10 px-6">
-        <div class="max-w-7xl mx-auto text-center mb-16">
-            <h2 class="text-3xl font-bold font-heading mb-3">Loved by Job Seekers Worldwide</h2>
-            <p class="text-slate-400 text-sm">See how ResumeAI helps professionals accelerate their careers.</p>
-        </div>
-        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div class="bg-cardBg border border-borderCol p-8 rounded-3xl space-y-4">
-                <div class="text-amber-400 text-lg">★★★★★</div>
-                <p class="text-slate-300 text-sm italic">"I went from getting zero callbacks to landing 3 interviews in my first week of using ResumeAI's tailored rewrites."</p>
-                <div class="text-xs font-bold text-indigo-400">— Sarah M., Software Engineer</div>
-            </div>
-            <div class="bg-cardBg border border-borderCol p-8 rounded-3xl space-y-4">
-                <div class="text-amber-400 text-lg">★★★★★</div>
-                <p class="text-slate-300 text-sm italic">"The ATS fit score breakdown showed me exactly what keywords I was missing. Absolute game-changer for job hunters."</p>
-                <div class="text-xs font-bold text-indigo-400">— David K., Product Manager</div>
-            </div>
-            <div class="bg-cardBg border border-borderCol p-8 rounded-3xl space-y-4">
-                <div class="text-amber-400 text-lg">★★★★★</div>
-                <p class="text-slate-300 text-sm italic">"Clean design, blazing fast responses, and incredible cover letter generation. Worth every penny of Pro."</p>
-                <div class="text-xs font-bold text-indigo-400">— Elena R., Data Scientist</div>
-            </div>
-        </div>
-    </section>
 
     <!-- FAQ Section -->
     <section id="faq" class="py-20 border-t border-borderCol px-6">
@@ -336,18 +332,18 @@
 
             <details class="bg-cardBg border border-borderCol rounded-2xl p-6 group cursor-pointer transition hover:border-indigo-500/40">
                 <summary class="font-semibold text-lg flex justify-between items-center font-heading">
-                    Will my CV pass Applicant Tracking Systems (ATS)?
+                    How do the free credits work?
                     <span class="group-open:rotate-45 transition transform text-indigo-400 text-xl font-bold">+</span>
                 </summary>
-                <p class="text-slate-400 text-sm mt-4 leading-relaxed">Yes! Our algorithms restructure your experience using targeted industry keywords and semantic formatting preferred by automated corporate screening software.</p>
+                <p class="text-slate-400 text-sm mt-4 leading-relaxed">Signing in with Google or GitHub is mandatory. Every new account receives exactly 3 free optimization checks. Once used up, upgrading to Pro is required for continued access.</p>
             </details>
 
             <details class="bg-cardBg border border-borderCol rounded-2xl p-6 group cursor-pointer transition hover:border-indigo-500/40">
                 <summary class="font-semibold text-lg flex justify-between items-center font-heading">
-                    How is this different from other resume builders?
+                    Will my CV pass Applicant Tracking Systems (ATS)?
                     <span class="group-open:rotate-45 transition transform text-indigo-400 text-xl font-bold">+</span>
                 </summary>
-                <p class="text-slate-400 text-sm mt-4 leading-relaxed">Unlike static template fillers, ResumeAI uses parallel AI processing to dynamically re-contextualize your actual work history against live job postings in seconds.</p>
+                <p class="text-slate-400 text-sm mt-4 leading-relaxed">Yes! Our algorithms restructure your experience using targeted industry keywords and semantic formatting preferred by automated corporate screening software.</p>
             </details>
 
             <details class="bg-cardBg border border-borderCol rounded-2xl p-6 group cursor-pointer transition hover:border-indigo-500/40">
@@ -360,39 +356,39 @@
         </div>
     </section>
 
-    <!-- Pricing & Authentication Section -->
+    <!-- Pricing & Mandatory Authentication Section -->
     <section id="pricing" class="py-20 border-t border-borderCol bg-cardBg/30 px-6">
         <div class="max-w-5xl mx-auto text-center">
-            <span class="text-xs uppercase tracking-wider text-purple-400 font-bold bg-purple-500/10 px-3.5 py-1.5 rounded-full border border-purple-500/20">Monetization</span>
-            <h2 class="text-3xl md:text-4xl font-bold font-heading mt-4 mb-3">Ready to Accelerate Your Career?</h2>
-            <p class="text-slate-400 mb-12">Choose a plan or continue securely with your preferred provider.</p>
+            <span class="text-xs uppercase tracking-wider text-purple-400 font-bold bg-purple-500/10 px-3.5 py-1.5 rounded-full border border-purple-500/20">Access Gate & Monetization</span>
+            <h2 class="text-3xl md:text-4xl font-bold font-heading mt-4 mb-3">Sign In Required to Optimize</h2>
+            <p class="text-slate-400 mb-12">Authenticate below with Google or GitHub to activate your 3 free credits.</p>
 
-            <!-- Authentication Section -->
+            <!-- Mandatory Authentication Section -->
             <div id="auth" class="flex flex-col sm:flex-row justify-center gap-4 mb-16">
-                <button onclick="showToast('Successfully signed in with Google!')" class="bg-slate-100 hover:bg-white text-slate-900 font-semibold px-8 py-3.5 rounded-2xl transition flex items-center justify-center gap-3 shadow-xl">
+                <button onclick="loginUser('Google')" class="bg-slate-100 hover:bg-white text-slate-900 font-semibold px-8 py-3.5 rounded-2xl transition flex items-center justify-center gap-3 shadow-xl">
                     <span class="font-bold text-lg">G</span> Continue with Google
                 </button>
-                <button onclick="showToast('Successfully signed in with GitHub!')" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold px-8 py-3.5 rounded-2xl transition flex items-center justify-center gap-3 border border-borderCol shadow-xl">
+                <button onclick="loginUser('GitHub')" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold px-8 py-3.5 rounded-2xl transition flex items-center justify-center gap-3 border border-borderCol shadow-xl">
                     <span class="text-lg">🐙</span> Continue with GitHub
                 </button>
             </div>
-            <p class="text-xs text-slate-500 mb-16">or try as a guest | By continuing, you agree to our Terms of Service and Privacy Policy.</p>
+            <p id="auth-status-msg" class="text-xs text-indigo-400 font-semibold mb-16">🔒 Authentication is mandatory to run resume checks.</p>
 
             <!-- Pricing Table -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-left max-w-3xl mx-auto">
                 <div class="bg-cardBg border border-borderCol rounded-3xl p-8 card-hover transition">
                     <h3 class="text-xl font-bold font-heading mb-2">Free Starter</h3>
-                    <p class="text-slate-400 text-sm mb-6">Essential optimization checks.</p>
+                    <p class="text-slate-400 text-sm mb-6">3 Free optimization checks.</p>
                     <div class="text-4xl font-extrabold font-heading mb-6">$0<span class="text-sm font-normal text-slate-400">/mo</span></div>
                     <ul class="space-y-3 text-sm text-slate-300 mb-8">
-                        <li>✓ 5 Free ATS Optimizations</li>
-                        <li>✓ Fit Score Calculator</li>
-                        <li>✓ Standard AI Speed</li>
+                        <li>✓ Mandatory Sign-in Gate</li>
+                        <li>✓ Exactly 3 Free Checks</li>
+                        <li>✓ ATS Fit Score Calculator</li>
                     </ul>
-                    <a href="#workspace" class="block text-center bg-slate-800 hover:bg-slate-700 py-3.5 rounded-2xl font-semibold transition">Get Started Free</a>
+                    <a href="#workspace" class="block text-center bg-slate-800 hover:bg-slate-700 py-3.5 rounded-2xl font-semibold transition">Use Free Credits</a>
                 </div>
                 <div class="bg-gradient-to-b from-indigo-950/60 to-cardBg border-2 border-indigo-500 rounded-3xl p-8 relative shadow-2xl glow-border">
-                    <span class="absolute -top-4 right-8 bg-indigo-500 text-white text-xs uppercase px-3.5 py-1 rounded-full font-bold font-mono tracking-wider shadow-md">Popular</span>
+                    <span class="absolute -top-4 right-8 bg-indigo-500 text-white text-xs uppercase px-3.5 py-1 rounded-full font-bold font-mono tracking-wider shadow-md">Required After 3</span>
                     <h3 class="text-xl font-bold font-heading mb-2">Pro Career Suite</h3>
                     <p class="text-slate-400 text-sm mb-6">For unlimited interview callbacks.</p>
                     <div class="text-4xl font-extrabold font-heading mb-6">$12<span class="text-sm font-normal text-slate-400">/mo</span></div>
@@ -403,9 +399,19 @@
                         <li>✓ Priority Lightning Speed</li>
                     </ul>
                     <!-- Replace with your actual Stripe Payment Link -->
-                    <a href="https://buy.stripe.com/your-payment-link" target="_blank" class="block text-center bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 py-3.5 rounded-2xl font-semibold transition shadow-lg shadow-indigo-600/30 text-white">Upgrade to Pro</a>
+                    <a href="https://buy.stripe.com/your-payment-link" target="_blank" class="block text-center bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 py-3.5 rounded-2xl font-semibold transition shadow-lg shadow-indigo-600/30 text-white">Upgrade to Pro ($12/mo)</a>
                 </div>
             </div>
+        </div>
+    </section>
+
+    <!-- Terms & Conditions Section -->
+    <section id="terms" class="py-16 border-t border-borderCol bg-darkBg px-6">
+        <div class="max-w-4xl mx-auto space-y-4">
+            <h3 class="text-lg font-bold font-heading text-slate-200">Terms & Conditions / Privacy Policy</h3>
+            <p class="text-slate-400 text-xs leading-relaxed">
+                By using ResumeAI, authentication via Google or GitHub is mandatory to access resume optimization features. New accounts receive exactly 3 free credits, after which an active subscription is required. All data is processed securely via encrypted channels and never sold or shared.
+            </p>
         </div>
     </section>
 
@@ -416,21 +422,23 @@
             <div class="flex items-center gap-6">
                 <a href="#faq" class="hover:text-slate-300 transition">FAQ</a>
                 <a href="#pricing" class="hover:text-slate-300 transition">Pricing</a>
-                <a href="mailto:support@resumeai.com" class="text-indigo-400 hover:underline">Help Center ✉️</a>
+                <a href="#terms" class="hover:text-slate-300 transition">Terms</a>
+                <!-- Change 'your-email@gmail.com' to your actual Gmail address -->
+                <a href="mailto:your-email@gmail.com?subject=ResumeAI%20Help%20Center%20Inquiry" class="text-indigo-400 hover:underline">Help Center ✉️</a>
             </div>
         </div>
     </footer>
 
-    <!-- Frontend Script & Animations -->
+    <!-- Frontend Script & Authentication Logic -->
     <script>
-        // GSAP Animations on Load
-        document.addEventListener("DOMContentLoaded", (event) => {
+        document.addEventListener("DOMContentLoaded", () => {
             gsap.from(".hero-section", {
                 duration: 1,
                 opacity: 0,
                 y: 30,
                 ease: "power3.out"
             });
+            checkLoginState();
         });
 
         function showToast(message) {
@@ -443,7 +451,74 @@
             }, 3500);
         }
 
+        function loginUser(provider) {
+            localStorage.setItem('resumeai_user', provider);
+            if (!localStorage.getItem('resumeai_credits')) {
+                localStorage.setItem('resumeai_credits', '3');
+            }
+            checkLoginState();
+            showToast(`Successfully signed in with ${provider}! 3 free credits unlocked.`);
+        }
+
+        function logoutUser() {
+            localStorage.removeItem('resumeai_user');
+            checkLoginState();
+            showToast('Signed out successfully.');
+        }
+
+        function checkLoginState() {
+            const user = localStorage.getItem('resumeai_user');
+            const statusBadge = document.getElementById('nav-user-status');
+            const logoutBtn = document.getElementById('logout-btn');
+            const authMsg = document.getElementById('auth-status-msg');
+            const workspaceLock = document.getElementById('workspace-lock');
+            let credits = localStorage.getItem('resumeai_credits');
+
+            if (!credits) {
+                credits = '3';
+                localStorage.setItem('resumeai_credits', credits);
+            }
+
+            if (user) {
+                // UNLOCK WORKSPACE
+                workspaceLock.classList.add('hidden');
+                statusBadge.textContent = `Signed In (${user})`;
+                statusBadge.className = "text-xs bg-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-xl border border-emerald-500/30 font-semibold hidden sm:inline-block";
+                logoutBtn.classList.remove('hidden');
+                document.getElementById('credits-display').textContent = `${credits} Free Checks Remaining`;
+                authMsg.textContent = `✅ Signed in via ${user}. You have ${credits} free checks remaining.`;
+                authMsg.className = "text-xs text-emerald-400 font-semibold mb-16";
+            } else {
+                // LOCK WORKSPACE
+                workspaceLock.classList.remove('hidden');
+                statusBadge.textContent = "Not Signed In";
+                statusBadge.className = "text-xs bg-slate-800 text-slate-400 px-3 py-1.5 rounded-xl border border-slate-700 font-semibold hidden sm:inline-block";
+                logoutBtn.classList.add('hidden');
+                document.getElementById('credits-display').textContent = "Locked (Sign In Required)";
+                authMsg.textContent = "🔒 Authentication via Google or GitHub is mandatory to run resume checks.";
+                authMsg.className = "text-xs text-indigo-400 font-semibold mb-16";
+            }
+        }
+
         async function processAction(endpoint) {
+            const user = localStorage.getItem('resumeai_user');
+            
+            // MANDATORY LOGIN CHECK
+            if (!user) {
+                showToast('⚠️ Sign in with Google or GitHub is mandatory!');
+                document.getElementById('workspace').scrollIntoView({ behavior: 'smooth' });
+                return;
+            }
+
+            let credits = parseInt(localStorage.getItem('resumeai_credits') || '0');
+            
+            // CREDIT CHECK (3 FREE CHECKS LIMIT)
+            if (credits <= 0) {
+                alert('⚠️ You have used your 3 free optimization credits! Please upgrade to the Pro plan for unlimited checks.');
+                document.getElementById('pricing').scrollIntoView({ behavior: 'smooth' });
+                return;
+            }
+
             const resumeText = document.getElementById('resumeText').value;
             const jobDescription = document.getElementById('jobDescription').value;
             const output = document.getElementById('output');
@@ -465,6 +540,12 @@
                 });
                 const data = await response.json();
                 loading.classList.add('hidden');
+                
+                // Deduct 1 credit upon success
+                credits--;
+                localStorage.setItem('resumeai_credits', credits.toString());
+                checkLoginState();
+
                 output.textContent = data.perfect_resume || data.optimized_resume || data.fit_score || data.cover_letter || JSON.stringify(data, null, 2);
             } catch (err) {
                 loading.classList.add('hidden');
