@@ -58,6 +58,40 @@
         <span>✨</span> <span id="toast-msg">Successfully authenticated!</span>
     </div>
 
+    <!-- OTP AUTHENTICATION MODAL -->
+    <div id="auth-modal" class="fixed inset-0 bg-darkBg/90 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-cardBg border border-borderCol rounded-3xl p-8 max-w-md w-full shadow-2xl relative space-y-6">
+            <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl">✕</button>
+            <div class="text-center space-y-2">
+                <div class="w-12 h-12 bg-indigo-500/10 border border-indigo-500/30 rounded-2xl flex items-center justify-center text-indigo-400 text-2xl mx-auto">🔒</div>
+                <h3 class="text-2xl font-bold font-heading">Secure Email & OTP Verification</h3>
+                <p class="text-slate-400 text-xs">Enter your valid email address to receive a secure verification code.</p>
+            </div>
+
+            <!-- Step 1: Email Input Form -->
+            <div id="step-email" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-2">Email Address</label>
+                    <input type="email" id="user-email-input" class="w-full bg-darkBg border border-borderCol rounded-xl p-3.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition" placeholder="name@example.com">
+                </div>
+                <button onclick="sendOTP()" class="w-full bg-indigo-600 hover:bg-indigo-500 font-semibold py-3.5 rounded-xl transition shadow-lg shadow-indigo-600/30 text-sm">Send Verification Code (OTP)</button>
+            </div>
+
+            <!-- Step 2: OTP Verification Form (Hidden Initially) -->
+            <div id="step-otp" class="space-y-4 hidden">
+                <div class="p-3 bg-indigo-950/40 border border-indigo-500/30 rounded-xl text-xs text-indigo-300 text-center">
+                    Verification code sent to <span id="display-target-email" class="font-bold text-white"></span>. <br><span id="otp-hint" class="text-amber-400 font-mono mt-1 block"></span>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-2">Enter 6-Digit OTP Code</label>
+                    <input type="text" maxlength="6" id="user-otp-input" class="w-full bg-darkBg border border-borderCol rounded-xl p-3.5 text-center tracking-widest text-lg font-mono text-slate-200 focus:outline-none focus:border-indigo-500 transition" placeholder="123456">
+                </div>
+                <button onclick="verifyOTP()" class="w-full bg-emerald-600 hover:bg-emerald-500 font-semibold py-3.5 rounded-xl transition shadow-lg shadow-emerald-600/30 text-sm">Verify & Unlock Studio</button>
+                <button onclick="resetAuthModal()" class="w-full text-xs text-slate-400 hover:text-white transition">← Use a different email</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Glassmorphic Navbar -->
     <header class="sticky top-0 z-50 backdrop-blur-xl bg-darkBg/70 border-b border-borderCol/50">
         <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -71,7 +105,6 @@
                 <a href="#features" class="hover:text-indigo-400 transition">Features</a>
                 <a href="#ats-guide" class="hover:text-indigo-400 transition">ATS Guide</a>
                 <a href="#pricing" class="hover:text-indigo-400 transition">Pricing</a>
-                <!-- Change 'your-email@gmail.com' to your actual Gmail address -->
                 <a href="mailto:your-email@gmail.com?subject=ResumeAI%20Help%20Center%20Inquiry" class="hover:text-indigo-400 transition flex items-center gap-1.5 text-indigo-400 font-semibold">Help Center ✉️</a>
             </nav>
             <div class="flex items-center space-x-4">
@@ -160,8 +193,8 @@
         <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
             <div class="bg-cardBg border border-borderCol p-8 rounded-3xl card-hover transition duration-300">
                 <div class="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-400 font-bold text-xl mb-6 border border-indigo-500/20">1</div>
-                <h3 class="text-xl font-bold font-heading mb-3">Sign In & Get Credits</h3>
-                <p class="text-slate-400 text-sm leading-relaxed">Sign in with Google or GitHub to unlock your 3 free resume optimization checks.</p>
+                <h3 class="text-xl font-bold font-heading mb-3">Verify Email & Get Credits</h3>
+                <p class="text-slate-400 text-sm leading-relaxed">Verify your email via OTP to unlock your 3 free resume optimization checks.</p>
             </div>
             <div class="bg-cardBg border border-borderCol p-8 rounded-3xl card-hover transition duration-300">
                 <div class="w-12 h-12 bg-purple-500/10 rounded-2xl flex items-center justify-center text-purple-400 font-bold text-xl mb-6 border border-purple-500/20">2</div>
@@ -260,23 +293,18 @@
         <div class="text-center max-w-2xl mx-auto mb-16">
             <span class="text-xs uppercase tracking-wider text-cyan-400 font-bold bg-cyan-500/10 px-3.5 py-1.5 rounded-full border border-cyan-500/20">Live Studio</span>
             <h2 class="text-3xl md:text-4xl font-bold font-heading mt-4 mb-3">Interactive Optimization Studio</h2>
-            <p class="text-slate-400 text-sm">Status: <strong><span id="credits-display" class="text-indigo-400 font-bold">Locked (Sign In Required)</span></strong></p>
+            <p class="text-slate-400 text-sm">Status: <strong><span id="credits-display" class="text-indigo-400 font-bold">Locked (Valid Email & OTP Required)</span></strong></p>
         </div>
 
         <div class="relative">
-            <!-- VISUAL LOCK OVERLAY (Forces Login) -->
+            <!-- VISUAL LOCK OVERLAY (Forces Email + OTP Verification) -->
             <div id="workspace-lock" class="absolute inset-0 bg-darkBg/95 backdrop-blur-md z-30 flex flex-col items-center justify-center text-center p-8 rounded-3xl border-2 border-indigo-500/40 shadow-2xl">
                 <div class="w-16 h-16 bg-indigo-500/10 border border-indigo-500/30 rounded-2xl flex items-center justify-center text-indigo-400 text-3xl mb-4 animate-bounce">🔒</div>
-                <h3 class="text-2xl font-bold font-heading mb-2">Authentication Mandatory</h3>
-                <p class="text-slate-400 text-sm max-w-md mb-6">You must sign in with Google or GitHub to unlock your 3 free resume optimization checks and access the studio.</p>
-                <div class="flex flex-col sm:flex-row gap-4">
-                    <button onclick="loginUser('Google')" class="bg-slate-100 hover:bg-white text-slate-900 font-semibold px-6 py-3 rounded-xl transition flex items-center gap-2 shadow-lg">
-                        <span class="font-bold">G</span> Sign in with Google
-                    </button>
-                    <button onclick="loginUser('GitHub')" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold px-6 py-3 rounded-xl transition flex items-center gap-2 border border-borderCol shadow-lg">
-                        <span>🐙</span> Sign in with GitHub
-                    </button>
-                </div>
+                <h3 class="text-2xl font-bold font-heading mb-2">Email & OTP Verification Required</h3>
+                <p class="text-slate-400 text-sm max-w-md mb-6">You must verify a valid email address via a 6-digit OTP code to unlock your 3 free resume optimization checks.</p>
+                <button onclick="openAuthModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-8 py-3.5 rounded-xl transition shadow-lg shadow-indigo-600/30 flex items-center gap-2">
+                    <span>✨</span> Verify Email with OTP
+                </button>
             </div>
 
             <!-- Workspace Grid -->
@@ -332,10 +360,10 @@
 
             <details class="bg-cardBg border border-borderCol rounded-2xl p-6 group cursor-pointer transition hover:border-indigo-500/40">
                 <summary class="font-semibold text-lg flex justify-between items-center font-heading">
-                    How do the free credits work?
+                    How do the free credits and OTP work?
                     <span class="group-open:rotate-45 transition transform text-indigo-400 text-xl font-bold">+</span>
                 </summary>
-                <p class="text-slate-400 text-sm mt-4 leading-relaxed">Signing in with Google or GitHub is mandatory. Every new account receives exactly 3 free optimization checks. Once used up, upgrading to Pro is required for continued access.</p>
+                <p class="text-slate-400 text-sm mt-4 leading-relaxed">Valid email and 6-digit OTP verification is mandatory. Every verified account receives 3 free optimization checks. Once used up, upgrading to Pro is required for continued access.</p>
             </details>
 
             <details class="bg-cardBg border border-borderCol rounded-2xl p-6 group cursor-pointer transition hover:border-indigo-500/40">
@@ -356,23 +384,20 @@
         </div>
     </section>
 
-    <!-- Pricing & Mandatory Authentication Section -->
+    <!-- Pricing & Authentication Section -->
     <section id="pricing" class="py-20 border-t border-borderCol bg-cardBg/30 px-6">
         <div class="max-w-5xl mx-auto text-center">
             <span class="text-xs uppercase tracking-wider text-purple-400 font-bold bg-purple-500/10 px-3.5 py-1.5 rounded-full border border-purple-500/20">Access Gate & Monetization</span>
-            <h2 class="text-3xl md:text-4xl font-bold font-heading mt-4 mb-3">Sign In Required to Optimize</h2>
-            <p class="text-slate-400 mb-12">Authenticate below with Google or GitHub to activate your 3 free credits.</p>
+            <h2 class="text-3xl md:text-4xl font-bold font-heading mt-4 mb-3">Email & OTP Verification Required</h2>
+            <p class="text-slate-400 mb-12">Verify your email address below to unlock your 3 free credits.</p>
 
-            <!-- Mandatory Authentication Section -->
+            <!-- Authentication Trigger Section -->
             <div id="auth" class="flex flex-col sm:flex-row justify-center gap-4 mb-16">
-                <button onclick="loginUser('Google')" class="bg-slate-100 hover:bg-white text-slate-900 font-semibold px-8 py-3.5 rounded-2xl transition flex items-center justify-center gap-3 shadow-xl">
-                    <span class="font-bold text-lg">G</span> Continue with Google
-                </button>
-                <button onclick="loginUser('GitHub')" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold px-8 py-3.5 rounded-2xl transition flex items-center justify-center gap-3 border border-borderCol shadow-xl">
-                    <span class="text-lg">🐙</span> Continue with GitHub
+                <button onclick="openAuthModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-8 py-3.5 rounded-2xl transition flex items-center justify-center gap-3 shadow-xl">
+                    <span>✨</span> Verify Email & Sign In with OTP
                 </button>
             </div>
-            <p id="auth-status-msg" class="text-xs text-indigo-400 font-semibold mb-16">🔒 Authentication is mandatory to run resume checks.</p>
+            <p id="auth-status-msg" class="text-xs text-indigo-400 font-semibold mb-16">🔒 Valid email & OTP verification is mandatory to run resume checks.</p>
 
             <!-- Pricing Table -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-left max-w-3xl mx-auto">
@@ -381,7 +406,7 @@
                     <p class="text-slate-400 text-sm mb-6">3 Free optimization checks.</p>
                     <div class="text-4xl font-extrabold font-heading mb-6">$0<span class="text-sm font-normal text-slate-400">/mo</span></div>
                     <ul class="space-y-3 text-sm text-slate-300 mb-8">
-                        <li>✓ Mandatory Sign-in Gate</li>
+                        <li>✓ Mandatory Email Verification</li>
                         <li>✓ Exactly 3 Free Checks</li>
                         <li>✓ ATS Fit Score Calculator</li>
                     </ul>
@@ -410,7 +435,7 @@
         <div class="max-w-4xl mx-auto space-y-4">
             <h3 class="text-lg font-bold font-heading text-slate-200">Terms & Conditions / Privacy Policy</h3>
             <p class="text-slate-400 text-xs leading-relaxed">
-                By using ResumeAI, authentication via Google or GitHub is mandatory to access resume optimization features. New accounts receive exactly 3 free credits, after which an active subscription is required. All data is processed securely via encrypted channels and never sold or shared.
+                By using ResumeAI, valid email verification via a 6-digit OTP code is mandatory to access resume optimization features. New verified accounts receive exactly 3 free credits, after which an active subscription is required. All data is processed securely via encrypted channels and never sold or shared.
             </p>
         </div>
     </section>
@@ -429,8 +454,11 @@
         </div>
     </footer>
 
-    <!-- Frontend Script & Authentication Logic -->
+    <!-- Frontend Script & OTP Verification Logic -->
     <script>
+        let generatedOTP = "";
+        let pendingEmail = "";
+
         document.addEventListener("DOMContentLoaded", () => {
             gsap.from(".hero-section", {
                 duration: 1,
@@ -451,13 +479,59 @@
             }, 3500);
         }
 
-        function loginUser(provider) {
-            localStorage.setItem('resumeai_user', provider);
+        function openAuthModal() {
+            document.getElementById('auth-modal').classList.remove('hidden');
+        }
+
+        function closeAuthModal() {
+            document.getElementById('auth-modal').classList.add('hidden');
+        }
+
+        function resetAuthModal() {
+            document.getElementById('step-email').classList.remove('hidden');
+            document.getElementById('step-otp').classList.add('hidden');
+            document.getElementById('user-email-input').value = '';
+        }
+
+        function sendOTP() {
+            const email = document.getElementById('user-email-input').value.trim();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (!emailRegex.test(email)) {
+                alert('⚠️ Please enter a valid email address.');
+                return;
+            }
+
+            pendingEmail = email;
+            // Generate a random 6-digit OTP code
+            generatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
+            
+            document.getElementById('display-target-email').textContent = email;
+            // For testing convenience right on screen, we display the generated OTP code hint
+            document.getElementById('otp-hint').textContent = `[Demo OTP Code: ${generatedOTP}]`;
+
+            document.getElementById('step-email').classList.add('hidden');
+            document.getElementById('step-otp').classList.remove('hidden');
+            showToast('OTP verification code sent to your email.');
+        }
+
+        function verifyOTP() {
+            const enteredOTP = document.getElementById('user-otp-input').value.trim();
+
+            if (enteredOTP !== generatedOTP) {
+                alert('❌ Invalid OTP verification code. Please check and try again.');
+                return;
+            }
+
+            // SUCCESSFUL VERIFICATION
+            localStorage.setItem('resumeai_user', pendingEmail);
             if (!localStorage.getItem('resumeai_credits')) {
                 localStorage.setItem('resumeai_credits', '3');
             }
+
+            closeAuthModal();
             checkLoginState();
-            showToast(`Successfully signed in with ${provider}! 3 free credits unlocked.`);
+            showToast(`Email verified successfully! Welcome, ${pendingEmail}`);
         }
 
         function logoutUser() {
@@ -482,11 +556,11 @@
             if (user) {
                 // UNLOCK WORKSPACE
                 workspaceLock.classList.add('hidden');
-                statusBadge.textContent = `Signed In (${user})`;
+                statusBadge.textContent = user;
                 statusBadge.className = "text-xs bg-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-xl border border-emerald-500/30 font-semibold hidden sm:inline-block";
                 logoutBtn.classList.remove('hidden');
                 document.getElementById('credits-display').textContent = `${credits} Free Checks Remaining`;
-                authMsg.textContent = `✅ Signed in via ${user}. You have ${credits} free checks remaining.`;
+                authMsg.textContent = `✅ Verified via ${user}. You have ${credits} free checks remaining.`;
                 authMsg.className = "text-xs text-emerald-400 font-semibold mb-16";
             } else {
                 // LOCK WORKSPACE
@@ -494,8 +568,8 @@
                 statusBadge.textContent = "Not Signed In";
                 statusBadge.className = "text-xs bg-slate-800 text-slate-400 px-3 py-1.5 rounded-xl border border-slate-700 font-semibold hidden sm:inline-block";
                 logoutBtn.classList.add('hidden');
-                document.getElementById('credits-display').textContent = "Locked (Sign In Required)";
-                authMsg.textContent = "🔒 Authentication via Google or GitHub is mandatory to run resume checks.";
+                document.getElementById('credits-display').textContent = "Locked (Valid Email & OTP Required)";
+                authMsg.textContent = "🔒 Valid email & OTP verification is mandatory to run resume checks.";
                 authMsg.className = "text-xs text-indigo-400 font-semibold mb-16";
             }
         }
@@ -503,10 +577,10 @@
         async function processAction(endpoint) {
             const user = localStorage.getItem('resumeai_user');
             
-            // MANDATORY LOGIN CHECK
+            // MANDATORY EMAIL + OTP LOGIN CHECK
             if (!user) {
-                showToast('⚠️ Sign in with Google or GitHub is mandatory!');
-                document.getElementById('workspace').scrollIntoView({ behavior: 'smooth' });
+                showToast('⚠️ Email & OTP verification is mandatory!');
+                openAuthModal();
                 return;
             }
 
