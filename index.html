@@ -1,177 +1,140 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Resume Optimizer</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1a1f3a 100%);
-            color: #f1f5f9; min-height: 100vh; padding: 20px;
-        }
-        .container { max-width: 1200px; margin: 0 auto; }
-        header {
-            text-align: center; margin-bottom: 40px; padding: 30px;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 12px;
-        }
-        header h1 { font-size: 2.5em; margin-bottom: 10px; }
-        header p { font-size: 1.1em; opacity: 0.9; }
-        .content { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
-        .panel { background: #1e293b; border-radius: 12px; padding: 30px; border: 1px solid #334155; }
-        h2 { color: #6366f1; margin-bottom: 15px; font-size: 1.3em; }
-        textarea {
-            width: 100%; padding: 15px; background: rgba(255, 255, 255, 0.05);
-            border: 1px solid #334155; border-radius: 8px; color: #f1f5f9;
-            font-size: 0.95em; resize: vertical; font-family: 'Courier New', monospace; margin-bottom: 15px;
-        }
-        textarea:focus { outline: none; border-color: #6366f1; background: rgba(99, 102, 241, 0.1); }
-        .button-group { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 20px; }
-        button {
-            padding: 12px; border: none; border-radius: 8px; font-weight: 600;
-            cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; font-size: 0.9em;
-        }
-        .btn-perfect { background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 15px; }
-        .btn-perfect:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(16, 185, 129, 0.3); }
-        .btn-optimize { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 15px; }
-        .btn-optimize:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3); }
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #334155; flex-wrap: wrap; }
-        .tab-btn {
-            padding: 10px 15px; background: none; border: none; color: #cbd5e1;
-            cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.3s ease; font-weight: 600;
-        }
-        .tab-btn.active { color: #6366f1; border-bottom-color: #6366f1; }
-        .tab { display: none; }
-        .tab.active { display: block; }
-        .result-box {
-            background: rgba(255, 255, 255, 0.05); border: 1px solid #334155; border-radius: 8px;
-            padding: 20px; max-height: 400px; overflow-y: auto; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word;
-        }
-        .spinner {
-            display: none; position: fixed; top: 50%; left: 50%; width: 40px; height: 40px;
-            border: 4px solid rgba(99, 102, 241, 0.2); border-top-color: #6366f1; border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @media (max-width: 1024px) { .content { grid-template-columns: 1fr; } }
-    </style>
+    <title>ResumeAI - Pro ATS Resume Optimizer & Cover Letter Generator</title>
+    <!-- Tailwind CSS CDN for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <div class="container">
-        <header>
-            <h1>🚀 AI Resume Optimizer</h1>
-            <p>Get your resume optimized with AI</p>
-        </header>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased selection:bg-indigo-500 selection:text-white">
 
-        <div class="content">
-            <div class="panel">
-                <h2>📄 Resume</h2>
-                <textarea id="resumeText" placeholder="Paste your resume here..." rows="10"></textarea>
-                <h2>💼 Job Description</h2>
-                <textarea id="jobDescription" placeholder="Paste job description here..." rows="8"></textarea>
-                
-                <div class="button-group">
-                    <!-- Professional Title for the 100/100 feature -->
-                    <button class="btn-perfect" onclick="processSingleReq('perfect-resume')">🏆 Auto-Tailor to Job (Max ATS)</button>
-                    
-                    <!-- Single click generates Optimized, Score, and Letter concurrently -->
-                    <button class="btn-optimize" onclick="generateAll()">✨ Optimize, Score & Cover Letter</button>
-                </div>
+    <!-- Navigation Bar -->
+    <header class="sticky top-0 z-50 backdrop-blur-md bg-slate-950/80 border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <span class="text-2xl font-black bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">ResumeAI</span>
             </div>
-
-            <div class="panel">
-                <h2>📋 Results</h2>
-                <div class="tabs">
-                    <button class="tab-btn active" onclick="switchTab(event, 'perfect-resume')">Perfect 100</button>
-                    <button class="tab-btn" onclick="switchTab(event, 'optimize')">Optimized</button>
-                    <button class="tab-btn" onclick="switchTab(event, 'fit-score')">Score</button>
-                    <button class="tab-btn" onclick="switchTab(event, 'cover-letter')">Letter</button>
-                </div>
-                <div id="perfect-resume" class="tab active"><div class="result-box">Results will appear here...</div></div>
-                <div id="optimize" class="tab"><div class="result-box">Results will appear here...</div></div>
-                <div id="fit-score" class="tab"><div class="result-box">Results will appear here...</div></div>
-                <div id="cover-letter" class="tab"><div class="result-box">Results will appear here...</div></div>
+            <nav class="hidden md:flex space-x-8 text-sm font-medium text-slate-300">
+                <a href="#workspace" class="hover:text-indigo-400 transition">Tool</a>
+                <a href="#features" class="hover:text-indigo-400 transition">Features</a>
+                <a href="#pricing" class="hover:text-indigo-400 transition">Pricing</a>
+            </nav>
+            <div>
+                <a href="#pricing" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition shadow-lg shadow-indigo-600/20">Upgrade Pro</a>
             </div>
         </div>
-    </div>
-    <div class="spinner" id="spinner"></div>
+    </header>
 
+    <!-- Hero Section -->
+    <section class="py-20 text-center px-6 max-w-4xl mx-auto">
+        <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight mb-6">
+            Land More Interviews with <span class="bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">AI-Powered Resumes</span>
+        </h1>
+        <p class="text-lg md:text-xl text-slate-400 mb-10">
+            Instantly optimize your resume for any job description, check your ATS compatibility score, and generate custom cover letters in seconds.
+        </p>
+    </section>
+
+    <!-- Workspace Section -->
+    <main id="workspace" class="max-w-7xl mx-auto px-6 pb-24">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Inputs Column -->
+            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-6">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-300 mb-2">Paste Your Resume</label>
+                    <textarea id="resumeText" rows="8" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition resize-none" placeholder="Paste your raw resume text here..."></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-300 mb-2">Paste Job Description</label>
+                    <textarea id="jobDescription" rows="8" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition resize-none" placeholder="Paste target job posting here..."></textarea>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <button onclick="processAction('/api/optimize')" class="flex-1 bg-indigo-600 hover:bg-indigo-500 font-semibold py-3 px-6 rounded-xl transition shadow-lg shadow-indigo-600/25 text-sm">✨ Optimize & Score</button>
+                    <button onclick="processAction('/api/perfect-resume')" class="flex-1 bg-emerald-600 hover:bg-emerald-500 font-semibold py-3 px-6 rounded-xl transition shadow-lg shadow-emerald-600/25 text-sm">🏆 100/100 ATS Rewrite</button>
+                </div>
+            </div>
+
+            <!-- Output Column -->
+            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl flex flex-col">
+                <h2 class="text-lg font-semibold text-slate-300 mb-4">AI Analysis Results</h2>
+                <div id="loading" class="hidden text-indigo-400 animate-pulse my-auto text-center font-medium">Analyzing resume with Groq AI...</div>
+                <div id="output" class="w-full flex-1 bg-slate-950 border border-slate-800 rounded-2xl p-4 text-sm text-slate-300 whitespace-pre-wrap overflow-y-auto max-h-[500px]">Results will appear here...</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Pricing / Subscription Section -->
+    <section id="pricing" class="py-20 border-t border-slate-800 bg-slate-900/50">
+        <div class="max-w-7xl mx-auto px-6 text-center">
+            <h2 class="text-3xl font-bold mb-4">Simple, Transparent Pricing</h2>
+            <p class="text-slate-400 mb-12">Choose the plan that fits your career goals.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <!-- Free Tier -->
+                <div class="bg-slate-900 border border-slate-800 rounded-3xl p-8 text-left">
+                    <h3 class="text-xl font-bold mb-2">Free Starter</h3>
+                    <p class="text-slate-400 text-sm mb-6">Great for quick resume checks.</p>
+                    <div class="text-4xl font-extrabold mb-6">$0<span class="text-sm font-normal text-slate-400">/month</span></div>
+                    <ul class="space-y-4 text-sm text-slate-300 mb-8">
+                        <li>✓ 5 Free ATS Optimizations</li>
+                        <li>✓ Basic Fit Score Calculator</li>
+                        <li>✓ Standard Speed AI</li>
+                    </ul>
+                    <a href="#workspace" class="block text-center bg-slate-800 hover:bg-slate-700 py-3 rounded-xl font-semibold transition">Get Started</a>
+                </div>
+                <!-- Pro Tier -->
+                <div class="bg-gradient-to-b from-indigo-900/40 to-slate-900 border-2 border-indigo-500 rounded-3xl p-8 text-left relative shadow-2xl">
+                    <span class="absolute -top-4 right-8 bg-indigo-500 text-white text-xs uppercase px-3 py-1 rounded-full font-bold">Popular</span>
+                    <h3 class="text-xl font-bold mb-2">Pro Career Suite</h3>
+                    <p class="text-slate-400 text-sm mb-6">For serious job seekers looking for callbacks.</p>
+                    <div class="text-4xl font-extrabold mb-6">$12<span class="text-sm font-normal text-slate-400">/month</span></div>
+                    <ul class="space-y-4 text-sm text-slate-300 mb-8">
+                        <li>✓ Unlimited ATS Optimizations</li>
+                        <li>✓ 100/100 ATS Tailored Rewrites</li>
+                        <li>✓ Custom Cover Letter Generator</li>
+                        <li>✓ Priority Lightning Speed</li>
+                    </ul>
+                    <!-- Replace '#' with your Stripe Payment Link URL later -->
+                    <a href="https://buy.stripe.com/your-payment-link" target="_blank" class="block text-center bg-indigo-600 hover:bg-indigo-500 py-3 rounded-xl font-semibold transition shadow-lg shadow-indigo-600/30">Upgrade to Pro</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-8 text-center text-xs text-slate-500 border-t border-slate-800">
+        &copy; 2026 ResumeAI. All rights reserved. Built for job seekers worldwide.
+    </footer>
+
+    <!-- Frontend Script -->
     <script>
-        const API_URL = '/api';
+        async function processAction(endpoint) {
+            const resumeText = document.getElementById('resumeText').value;
+            const jobDescription = document.getElementById('jobDescription').value;
+            const output = document.getElementById('output');
+            const loading = document.getElementById('loading');
 
-        // Handles the single "Auto-Tailor" request
-        async function processSingleReq(endpoint) {
-            const resume = document.getElementById('resumeText').value;
-            const job = document.getElementById('jobDescription').value;
-            if (!resume || !job) { alert('❌ Please fill both Resume and Job Description'); return; }
+            if (!resumeText || !jobDescription) {
+                alert('Please paste both your resume and the job description.');
+                return;
+            }
 
-            document.getElementById('spinner').style.display = 'block';
+            output.textContent = '';
+            loading.classList.remove('hidden');
+
             try {
-                const res = await fetch(`${API_URL}/${endpoint}`, {
+                const response = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ resumeText: resume, jobDescription: job })
+                    body: JSON.stringify({ resumeText, jobDescription })
                 });
-
-                const data = await res.json();
-                if (data.error) throw new Error(data.error);
-                
-                document.querySelector(`#${endpoint} .result-box`).textContent = data.perfect_resume;
-                switchTabDirect(endpoint);
-            } catch (error) {
-                alert('❌ Error: ' + error.message);
+                const data = await response.json();
+                loading.classList.add('hidden');
+                output.textContent = data.perfect_resume || data.optimized_resume || data.fit_score || data.cover_letter || JSON.stringify(data, null, 2);
+            } catch (err) {
+                loading.classList.add('hidden');
+                output.textContent = 'Error connecting to AI server.';
             }
-            document.getElementById('spinner').style.display = 'none';
-        }
-
-        // Handles 3 requests at the EXACT same time (Parallel Processing for speed)
-        async function generateAll() {
-            const resume = document.getElementById('resumeText').value;
-            const job = document.getElementById('jobDescription').value;
-            if (!resume || !job) { alert('❌ Please fill both Resume and Job Description'); return; }
-
-            document.getElementById('spinner').style.display = 'block';
-            try {
-                const reqBody = {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ resumeText: resume, jobDescription: job })
-                };
-
-                // Request all 3 endpoints concurrently
-                const [optRes, scoreRes, letterRes] = await Promise.all([
-                    fetch(`${API_URL}/optimize`, reqBody).then(r => r.json()),
-                    fetch(`${API_URL}/fit-score`, reqBody).then(r => r.json()),
-                    fetch(`${API_URL}/cover-letter`, reqBody).then(r => r.json())
-                ]);
-
-                if (optRes.error) throw new Error(optRes.error);
-                if (scoreRes.error) throw new Error(scoreRes.error);
-                if (letterRes.error) throw new Error(letterRes.error);
-
-                // Populate all tabs simultaneously
-                document.querySelector('#optimize .result-box').textContent = optRes.optimized_resume;
-                document.querySelector('#fit-score .result-box').textContent = scoreRes.fit_score;
-                document.querySelector('#cover-letter .result-box').textContent = letterRes.cover_letter;
-                
-                // Switch view to the optimized tab
-                switchTabDirect('optimize');
-            } catch (error) {
-                alert('❌ Error: ' + error.message);
-            }
-            document.getElementById('spinner').style.display = 'none';
-        }
-
-        function switchTab(event, tabName) {
-            event.preventDefault();
-            switchTabDirect(tabName);
-        }
-
-        function switchTabDirect(tabName) {
-            document.querySelectorAll('.tab, .tab-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabName).classList.add('active');
-            document.querySelector(`[onclick*="switchTab(event, '${tabName}')"]`).classList.add('active');
         }
     </script>
 </body>
