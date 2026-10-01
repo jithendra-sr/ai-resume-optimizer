@@ -16,13 +16,16 @@ const FREE_CREDITS = 3;
 if (!JWT_SECRET) console.warn('WARNING: set JWT_SECRET in environment variables.');
 const SECRET = JWT_SECRET || crypto.randomBytes(32).toString('hex');
 
-app.set('trust proxy', 1); // needed on Render for rate limiting
+app.set('trust proxy', 1); // Needed on Render for rate limiting
 app.use(cors());
 app.use(express.json({ limit: '100kb' }));
-// Serve ONLY the public folder (never __dirname, which exposes .env and server.js)
-app.use(express.static(path.join(__dirname, 'public')));
 
-// In-memory stores (reset on restart/redeploy; use a database for production)
+// Securely serve the index.html file without exposing .env or server.js
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// In-memory stores (use a database like MongoDB for production)
 const otpStore = new Map();   // email -> { otp, expires, attempts, lastSent }
 const credits = new Map();    // email -> remaining free checks
 
@@ -36,7 +39,7 @@ setInterval(() => {
   for (const [k, v] of otpStore) if (v.expires < now) otpStore.delete(k);
 }, 60 * 1000).unref();
 
-// Send email over HTTPS (Render free tier blocks SMTP ports)
+// Send email over HTTPS via Brevo
 async function sendOtpEmail(to, otp) {
   if (!BREVO_API_KEY || !EMAIL_USER) {
     console.log(`[DEV] OTP for ${to}: ${otp}`);
@@ -46,9 +49,9 @@ async function sendOtpEmail(to, otp) {
   await axios.post(
     'https://api.brevo.com/v3/smtp/email',
     {
-      sender: { name: 'ResumeAI', email: EMAIL_USER }, // must be a verified sender in Brevo
+      sender: { name: 'ResumeAI', email: EMAIL_USER },
       to: [{ email: to }],
-      subject: 'Your ResumeAI verification code',
+      subject: 'Your ResumeAI Verification Code',
       textContent: `Your 6-digit verification code is ${otp}. It expires in 10 minutes.`,
       htmlContent: `<div style="font-family:sans-serif;padding:24px;background:#090d16;color:#fff;border-radius:12px;max-width:420px;margin:auto">
         <h2 style="color:#818cf8;margin:0 0 12px">ResumeAI</h2>
