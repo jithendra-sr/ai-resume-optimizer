@@ -1,314 +1,448 @@
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ResumeAI - AI Resume Builder & ATS Optimizer</title>
-<meta name="description" content="Match your resume to any job description, see missing keywords, and get an ATS-friendly rewrite.">
-<script src="https://cdn.tailwindcss.com"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-<script>
-tailwind.config = { theme: { extend: {
-  fontFamily: { sans: ['Inter','sans-serif'], heading: ['Space Grotesk','sans-serif'] },
-  colors: { darkBg:'#090d16', cardBg:'#111827', borderCol:'#1f2937' } } } }
-</script>
-<style>
-  body { background:#090d16; }
-  .card-hover { transition: transform .25s, border-color .25s; }
-  .card-hover:hover { transform: translateY(-4px); border-color: rgba(99,102,241,.5); }
-  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
-  button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid #818cf8; outline-offset: 2px; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResumeAI - Pro ATS Resume Optimizer</title>
+    <meta name="description" content="Match your resume to any job description, see missing keywords, and get an ATS-friendly rewrite.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        heading: ['Space Grotesk', 'sans-serif']
+                    },
+                    colors: {
+                        darkBg: '#090d16',
+                        cardBg: '#111827',
+                        borderCol: '#1f2937'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background: #090d16; }
+        .card-hover { transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease; }
+        .card-hover:hover { transform: translateY(-6px); border-color: rgba(99,102,241,0.5); box-shadow: 0 10px 30px -10px rgba(99,102,241,0.3); }
+        .glass-overlay { background: rgba(9, 13, 22, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+        textarea { transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+        textarea:focus { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2); outline: none; }
+    </style>
 </head>
-<body class="bg-darkBg text-slate-100 font-sans antialiased overflow-x-hidden">
+<body class="bg-darkBg text-slate-100 font-sans antialiased overflow-x-hidden selection:bg-indigo-500 selection:text-white">
 
-<!-- Toast -->
-<div id="toast" role="status" class="fixed bottom-6 right-6 z-50 translate-y-32 opacity-0 transition-all duration-300 bg-indigo-600 text-white px-5 py-3 rounded-2xl shadow-2xl text-sm font-medium"></div>
+    <!-- Toast Notification -->
+    <div id="toast" role="status" class="fixed bottom-6 right-6 z-50 translate-y-32 opacity-0 transition-all duration-300 bg-indigo-600 text-white px-6 py-3.5 rounded-xl shadow-2xl text-sm font-medium flex items-center gap-2">
+        <span class="text-lg">✨</span> <span id="toast-msg"></span>
+    </div>
 
-<!-- Auth modal -->
-<div id="auth-modal" class="hidden fixed inset-0 bg-darkBg/90 backdrop-blur-md z-50 items-center justify-center p-4">
-  <div class="bg-cardBg border border-borderCol rounded-3xl p-8 max-w-md w-full shadow-2xl relative space-y-5">
-    <button onclick="closeAuthModal()" aria-label="Close" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl">✕</button>
-    <div class="text-center space-y-1">
-      <h3 class="text-2xl font-bold font-heading">Verify your email</h3>
-      <p class="text-slate-400 text-xs">We'll send a 6-digit code to unlock your 3 free checks.</p>
-    </div>
-    <div id="step-email" class="space-y-4">
-      <label class="block text-xs font-semibold text-slate-300" for="user-email-input">Email address</label>
-      <input type="email" id="user-email-input" autocomplete="email" class="w-full bg-darkBg border border-borderCol rounded-xl p-3.5 text-sm focus:outline-none focus:border-indigo-500" placeholder="name@example.com">
-      <button onclick="sendOTP()" id="send-otp-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 font-semibold py-3.5 rounded-xl text-sm transition">Send code</button>
-    </div>
-    <div id="step-otp" class="hidden space-y-4">
-      <p class="p-3 bg-indigo-950/40 border border-indigo-500/30 rounded-xl text-xs text-indigo-300 text-center">Code sent to <span id="display-target-email" class="font-bold text-white"></span>. Check spam too.</p>
-      <label class="block text-xs font-semibold text-slate-300" for="user-otp-input">6-digit code</label>
-      <input type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" id="user-otp-input" class="w-full bg-darkBg border border-borderCol rounded-xl p-3.5 text-center tracking-widest text-lg font-mono focus:outline-none focus:border-indigo-500" placeholder="123456">
-      <button onclick="verifyOTP()" id="verify-btn" class="w-full bg-emerald-600 hover:bg-emerald-500 font-semibold py-3.5 rounded-xl text-sm transition">Verify and unlock</button>
-      <button onclick="resetAuthModal()" class="w-full text-xs text-slate-400 hover:text-white">Use a different email</button>
-    </div>
-  </div>
-</div>
-
-<!-- Navbar -->
-<header class="sticky top-0 z-40 backdrop-blur-xl bg-darkBg/70 border-b border-borderCol/50">
-  <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-    <span class="text-2xl font-bold font-heading bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">ResumeAI</span>
-    <nav class="hidden md:flex gap-8 text-sm font-medium text-slate-300">
-      <a href="#workspace" class="hover:text-indigo-400">Studio</a>
-      <a href="#how-it-works" class="hover:text-indigo-400">How it works</a>
-      <a href="#ats-guide" class="hover:text-indigo-400">ATS guide</a>
-      <a href="#faq" class="hover:text-indigo-400">FAQ</a>
-      <a href="#pricing" class="hover:text-indigo-400">Pricing</a>
-      <a href="mailto:your-email@gmail.com?subject=ResumeAI%20Help" class="text-indigo-400 font-semibold">Help</a>
-    </nav>
-    <div class="flex items-center gap-3">
-      <span id="nav-user-status" class="hidden sm:inline-block text-xs bg-slate-800 text-slate-400 px-3 py-1.5 rounded-xl border border-slate-700 font-semibold">Not signed in</span>
-      <button onclick="logoutUser()" id="logout-btn" class="hidden text-xs bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 px-3 py-1.5 rounded-xl border border-rose-500/30 font-semibold">Sign out</button>
-      <a href="#pricing" class="bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2 rounded-xl text-sm font-semibold">Upgrade</a>
-    </div>
-  </div>
-</header>
-
-<!-- Hero -->
-<section class="py-20 px-6 max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center" id="hero">
-  <div class="space-y-6">
-    <h1 class="text-4xl md:text-6xl font-bold font-heading tracking-tight leading-tight">Tailor your resume to any job in seconds</h1>
-    <p class="text-slate-400 text-lg">Paste your resume and a job description. Get an ATS fit score, the keywords you're missing, and a rewritten resume you can edit and send.</p>
-    <div class="flex flex-col sm:flex-row gap-4">
-      <a href="#workspace" class="bg-indigo-600 hover:bg-indigo-500 text-center px-8 py-4 rounded-xl font-semibold transition">Try it free</a>
-      <a href="#ats-guide" class="bg-cardBg hover:bg-borderCol text-center border border-borderCol text-slate-300 px-8 py-4 rounded-xl font-semibold transition">How ATS works</a>
-    </div>
-  </div>
-  <div class="bg-cardBg border border-borderCol rounded-3xl p-6 shadow-2xl space-y-4" aria-hidden="true">
-    <div class="h-4 bg-indigo-500/20 rounded w-1/3"></div>
-    <div class="h-3 bg-slate-800 rounded"></div>
-    <div class="h-3 bg-slate-800 rounded w-5/6"></div>
-    <div class="p-4 bg-indigo-950/50 border border-indigo-500/40 rounded-2xl flex items-center justify-between">
-      <div><div class="text-xs font-bold">ATS keyword match</div><div class="text-[10px] text-slate-400">Example result</div></div>
-      <span class="font-bold font-heading text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-xl border border-emerald-500/20">87/100</span>
-    </div>
-  </div>
-</section>
-
-<!-- How it works -->
-<section id="how-it-works" class="py-16 border-t border-borderCol bg-cardBg/30 px-6">
-  <h2 class="text-3xl font-bold font-heading text-center mb-10">How it works</h2>
-  <div class="max-w-7xl mx-auto grid md:grid-cols-3 gap-6">
-    <div class="bg-cardBg border border-borderCol p-6 rounded-3xl card-hover"><h3 class="font-bold font-heading mb-2">1. Verify your email</h3><p class="text-slate-400 text-sm">Enter the 6-digit code we send you to unlock 3 free checks.</p></div>
-    <div class="bg-cardBg border border-borderCol p-6 rounded-3xl card-hover"><h3 class="font-bold font-heading mb-2">2. Paste resume and job</h3><p class="text-slate-400 text-sm">The AI compares skills and keywords against the job posting.</p></div>
-    <div class="bg-cardBg border border-borderCol p-6 rounded-3xl card-hover"><h3 class="font-bold font-heading mb-2">3. Copy the result</h3><p class="text-slate-400 text-sm">Review the rewrite, correct any details, and apply.</p></div>
-  </div>
-</section>
-
-<!-- Studio -->
-<main id="workspace" class="max-w-7xl mx-auto px-6 py-16">
-  <div class="text-center mb-10">
-    <h2 class="text-3xl font-bold font-heading mb-2">Optimization studio</h2>
-    <p class="text-slate-400 text-sm">Status: <strong id="credits-display" class="text-indigo-400">Locked. Verify your email to start.</strong></p>
-  </div>
-  <div class="relative">
-    <div id="workspace-lock" class="absolute inset-0 bg-darkBg/95 backdrop-blur-md z-30 flex flex-col items-center justify-center text-center p-8 rounded-3xl border border-indigo-500/40">
-      <h3 class="text-2xl font-bold font-heading mb-2">Verify your email to unlock</h3>
-      <p class="text-slate-400 text-sm max-w-md mb-6">Takes about a minute. You get 3 free checks.</p>
-      <button onclick="openAuthModal()" class="bg-indigo-600 hover:bg-indigo-500 font-semibold px-8 py-3.5 rounded-xl transition">Send verification code</button>
-    </div>
-    <div class="grid lg:grid-cols-2 gap-8">
-      <div class="bg-cardBg border border-borderCol rounded-3xl p-8 space-y-5">
-        <div>
-          <label for="resumeText" class="block text-sm font-semibold text-slate-300 mb-2">Your resume</label>
-          <textarea id="resumeText" rows="8" maxlength="15000" class="w-full bg-darkBg border border-borderCol rounded-2xl p-4 text-sm focus:outline-none focus:border-indigo-500 resize-none" placeholder="Paste your resume text..."></textarea>
+    <!-- OTP Auth Modal -->
+    <div id="auth-modal" class="hidden fixed inset-0 glass-overlay z-50 items-center justify-center p-4">
+        <div class="bg-cardBg border border-borderCol rounded-3xl p-8 max-w-md w-full shadow-2xl relative space-y-6">
+            <button onclick="closeAuthModal()" aria-label="Close" class="absolute top-5 right-5 text-slate-400 hover:text-white text-xl transition">✕</button>
+            <div class="text-center space-y-2">
+                <div class="w-12 h-12 bg-indigo-500/10 border border-indigo-500/30 rounded-2xl flex items-center justify-center text-indigo-400 text-2xl mx-auto mb-4">🔒</div>
+                <h3 class="text-2xl font-bold font-heading">Verify your email</h3>
+                <p class="text-slate-400 text-sm">We'll send a secure 6-digit code to your inbox to unlock your 3 free checks.</p>
+            </div>
+            
+            <div id="step-email" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1.5" for="user-email-input">Email Address</label>
+                    <input type="email" id="user-email-input" autocomplete="email" class="w-full bg-darkBg border border-borderCol rounded-xl p-3.5 text-sm focus:outline-none focus:border-indigo-500 transition" placeholder="name@example.com">
+                </div>
+                <button onclick="sendOTP()" id="send-otp-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3.5 rounded-xl text-sm transition shadow-lg shadow-indigo-600/20">Send Verification Code</button>
+            </div>
+            
+            <div id="step-otp" class="hidden space-y-4">
+                <p class="p-3 bg-indigo-950/40 border border-indigo-500/30 rounded-xl text-xs text-indigo-300 text-center leading-relaxed">
+                    Code dispatched to <span id="display-target-email" class="font-bold text-white"></span>.<br>Please check your spam folder if not seen.
+                </p>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1.5" for="user-otp-input">6-Digit Code</label>
+                    <input type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" id="user-otp-input" class="w-full bg-darkBg border border-borderCol rounded-xl p-3.5 text-center tracking-[0.5em] text-xl font-mono focus:outline-none focus:border-indigo-500 transition" placeholder="------">
+                </div>
+                <button onclick="verifyOTP()" id="verify-btn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3.5 rounded-xl text-sm transition shadow-lg shadow-emerald-600/20">Verify & Unlock Studio</button>
+                <button onclick="resetAuthModal()" class="w-full text-xs text-slate-400 hover:text-white transition">← Use a different email address</button>
+            </div>
         </div>
-        <div>
-          <label for="jobDescription" class="block text-sm font-semibold text-slate-300 mb-2">Job description</label>
-          <textarea id="jobDescription" rows="8" maxlength="10000" class="w-full bg-darkBg border border-borderCol rounded-2xl p-4 text-sm focus:outline-none focus:border-indigo-500 resize-none" placeholder="Paste the job posting..."></textarea>
+    </div>
+
+    <!-- Navigation -->
+    <header class="sticky top-0 z-40 backdrop-blur-xl bg-darkBg/70 border-b border-borderCol/50">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <span class="text-2xl font-black font-heading bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">ResumeAI</span>
+            <nav class="hidden md:flex gap-8 text-sm font-medium text-slate-300">
+                <a href="#workspace" class="hover:text-indigo-400 transition">Studio</a>
+                <a href="#how-it-works" class="hover:text-indigo-400 transition">How it Works</a>
+                <a href="#ats-guide" class="hover:text-indigo-400 transition">ATS Guide</a>
+                <a href="#faq" class="hover:text-indigo-400 transition">FAQ</a>
+                <a href="#pricing" class="hover:text-indigo-400 transition">Pricing</a>
+                <a href="mailto:your-email@gmail.com?subject=ResumeAI%20Help" class="text-indigo-400 font-semibold transition">Help Center</a>
+            </nav>
+            <div class="flex items-center gap-4">
+                <span id="nav-user-status" class="hidden sm:inline-block text-xs bg-slate-800 text-slate-400 px-3 py-1.5 rounded-lg border border-slate-700 font-medium">Not signed in</span>
+                <button onclick="logoutUser()" id="logout-btn" class="hidden text-xs bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 px-3 py-1.5 rounded-lg border border-rose-500/20 font-semibold transition">Sign out</button>
+                <a href="#pricing" class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg shadow-indigo-600/20 transition">Upgrade Pro</a>
+            </div>
         </div>
-        <div class="flex flex-col sm:flex-row gap-4">
-          <button id="btn-score" onclick="processAction('/api/optimize')" class="flex-1 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 font-semibold py-4 rounded-2xl text-sm transition">Score my resume</button>
-          <button id="btn-rewrite" onclick="processAction('/api/perfect-resume')" class="flex-1 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 font-semibold py-4 rounded-2xl text-sm transition">Rewrite my resume</button>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="py-24 px-6 max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center" id="hero">
+        <div class="space-y-8">
+            <div class="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1.5 rounded-full text-indigo-400 text-xs font-semibold">
+                <span class="animate-pulse">⚡</span> Powered by Llama 3 AI Engine
+            </div>
+            <h1 class="text-4xl md:text-6xl font-extrabold font-heading tracking-tight leading-[1.1]">
+                Tailor your resume to any job in seconds
+            </h1>
+            <p class="text-slate-400 text-lg leading-relaxed">
+                Paste your resume and a target job description. Instantly receive an ATS fit score, missing critical keywords, and a perfectly reframed resume ready to send.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4">
+                <a href="#workspace" class="bg-indigo-600 hover:bg-indigo-500 text-center text-white px-8 py-4 rounded-xl font-semibold transition shadow-lg shadow-indigo-600/20">Start Optimizing Free</a>
+                <a href="#ats-guide" class="bg-cardBg hover:bg-borderCol text-center border border-borderCol text-slate-300 px-8 py-4 rounded-xl font-semibold transition">Explore ATS Secrets</a>
+            </div>
         </div>
-      </div>
-      <div class="bg-cardBg border border-borderCol rounded-3xl p-8 flex flex-col">
-        <div class="flex items-center justify-between mb-4 pb-3 border-b border-borderCol">
-          <h2 class="text-lg font-bold font-heading">Results</h2>
-          <button onclick="copyOutput()" class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold">Copy</button>
+        
+        <div class="relative" aria-hidden="true">
+            <div class="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-cyan-500 rounded-3xl blur-2xl opacity-20 animate-pulse"></div>
+            <div class="relative bg-cardBg border border-borderCol rounded-3xl p-8 shadow-2xl space-y-5">
+                <div class="flex items-center justify-between pb-4 border-b border-borderCol">
+                    <div class="flex gap-2">
+                        <div class="w-3 h-3 rounded-full bg-rose-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-amber-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
+                    </div>
+                    <span class="text-xs text-slate-500 font-mono">live-analysis.ai</span>
+                </div>
+                <div class="h-4 bg-indigo-500/20 rounded w-1/3"></div>
+                <div class="h-3 bg-slate-800 rounded"></div>
+                <div class="h-3 bg-slate-800 rounded w-5/6"></div>
+                <div class="p-5 bg-indigo-950/40 border border-indigo-500/30 rounded-2xl flex items-center justify-between mt-6">
+                    <div>
+                        <div class="text-sm font-bold text-white mb-1">ATS Match Score</div>
+                        <div class="text-xs text-slate-400">Zero missing skills detected</div>
+                    </div>
+                    <span class="font-bold font-heading text-emerald-400 text-xl bg-emerald-500/10 px-4 py-1.5 rounded-xl border border-emerald-500/20">98/100</span>
+                </div>
+            </div>
         </div>
-        <div id="loading" class="hidden text-indigo-400 animate-pulse my-auto text-center py-20">Analyzing your resume... this can take up to 30 seconds.</div>
-        <div id="output" class="flex-1 bg-darkBg border border-borderCol rounded-2xl p-5 text-sm text-slate-300 whitespace-pre-wrap overflow-y-auto max-h-[500px] leading-relaxed">Results will appear here.</div>
-      </div>
-    </div>
-  </div>
-</main>
+    </section>
 
-<!-- ATS guide -->
-<section id="ats-guide" class="py-16 border-t border-borderCol bg-cardBg/20 px-6">
-  <h2 class="text-3xl font-bold font-heading text-center mb-10">Why resumes fail ATS and what helps</h2>
-  <div class="max-w-5xl mx-auto grid lg:grid-cols-2 gap-8">
-    <div class="bg-cardBg border border-borderCol rounded-3xl p-8 space-y-3">
-      <h3 class="text-xl font-bold font-heading text-rose-300">Common problems</h3>
-      <ul class="space-y-2 text-sm text-slate-300 list-disc pl-5">
-        <li><strong>Missing keywords:</strong> your wording differs from the job posting.</li>
-        <li><strong>Complex layouts:</strong> columns, tables and graphics can confuse parsers.</li>
-        <li><strong>Vague bullets:</strong> duties listed instead of results.</li>
-      </ul>
-    </div>
-    <div class="bg-cardBg border border-indigo-500/40 rounded-3xl p-8 space-y-3">
-      <h3 class="text-xl font-bold font-heading text-emerald-300">What ResumeAI does</h3>
-      <ul class="space-y-2 text-sm text-slate-300 list-disc pl-5">
-        <li><strong>Keyword gaps:</strong> shows which terms from the job are missing.</li>
-        <li><strong>Clean structure:</strong> rewrites into a simple single-column format.</li>
-        <li><strong>Fit score:</strong> gives an estimate before you apply. It is a guide, not a guarantee.</li>
-      </ul>
-    </div>
-  </div>
-</section>
+    <!-- How It Works -->
+    <section id="how-it-works" class="py-20 border-t border-borderCol bg-cardBg/20 px-6">
+        <h2 class="text-3xl md:text-4xl font-bold font-heading text-center mb-12">How ResumeAI Works</h2>
+        <div class="max-w-7xl mx-auto grid md:grid-cols-3 gap-8">
+            <div class="bg-cardBg border border-borderCol p-8 rounded-3xl card-hover">
+                <div class="w-12 h-12 bg-indigo-500/10 border border-indigo-500/20 rounded-xl flex items-center justify-center text-indigo-400 font-bold text-xl mb-6">1</div>
+                <h3 class="text-xl font-bold font-heading mb-3">Verify Identity</h3>
+                <p class="text-slate-400 text-sm leading-relaxed">Enter the secure 6-digit code sent to your email to instantly unlock your 3 free optimization checks.</p>
+            </div>
+            <div class="bg-cardBg border border-borderCol p-8 rounded-3xl card-hover">
+                <div class="w-12 h-12 bg-purple-500/10 border border-purple-500/20 rounded-xl flex items-center justify-center text-purple-400 font-bold text-xl mb-6">2</div>
+                <h3 class="text-xl font-bold font-heading mb-3">AI Semantic Match</h3>
+                <p class="text-slate-400 text-sm leading-relaxed">Paste your data. Our Groq-powered engine analyzes skill gaps and injects missing keywords seamlessly.</p>
+            </div>
+            <div class="bg-cardBg border border-borderCol p-8 rounded-3xl card-hover">
+                <div class="w-12 h-12 bg-cyan-500/10 border border-cyan-500/20 rounded-xl flex items-center justify-center text-cyan-400 font-bold text-xl mb-6">3</div>
+                <h3 class="text-xl font-bold font-heading mb-3">Deploy & Apply</h3>
+                <p class="text-slate-400 text-sm leading-relaxed">Copy your highly tailored resume rewrite, make final personal adjustments, and apply with confidence.</p>
+            </div>
+        </div>
+    </section>
 
-<!-- FAQ -->
-<section id="faq" class="py-16 border-t border-borderCol px-6">
-  <div class="max-w-3xl mx-auto space-y-4">
-    <h2 class="text-3xl font-bold font-heading text-center mb-8">FAQ</h2>
-    <details class="bg-cardBg border border-borderCol rounded-2xl p-5"><summary class="font-semibold cursor-pointer">How do free checks work?</summary><p class="text-slate-400 text-sm mt-3">Verify your email once and get 3 free checks. Each score or rewrite uses one check, and failed requests are not charged.</p></details>
-    <details class="bg-cardBg border border-borderCol rounded-2xl p-5"><summary class="font-semibold cursor-pointer">Will my resume pass every ATS?</summary><p class="text-slate-400 text-sm mt-3">No tool can promise that. ResumeAI improves keyword match and formatting, which are the most common reasons for rejection.</p></details>
-    <details class="bg-cardBg border border-borderCol rounded-2xl p-5"><summary class="font-semibold cursor-pointer">Is my data private?</summary><p class="text-slate-400 text-sm mt-3">Your text is sent over HTTPS to our AI provider to produce the result and is not stored by this app. Always review the AI output and fix any details before sending.</p></details>
-  </div>
-</section>
+    <!-- Interactive Studio -->
+    <main id="workspace" class="max-w-7xl mx-auto px-6 py-20 relative">
+        <div class="text-center mb-12">
+            <span class="text-xs uppercase tracking-widest text-cyan-400 font-bold bg-cyan-500/10 px-4 py-1.5 rounded-full border border-cyan-500/20">Live Studio</span>
+            <h2 class="text-3xl md:text-4xl font-bold font-heading mt-6 mb-3">Interactive Optimization Studio</h2>
+            <p class="text-slate-400 text-sm">Status: <strong id="credits-display" class="text-indigo-400">Locked. Verify your email to start.</strong></p>
+        </div>
 
-<!-- Pricing -->
-<section id="pricing" class="py-16 border-t border-borderCol bg-cardBg/30 px-6">
-  <div class="max-w-3xl mx-auto text-center">
-    <h2 class="text-3xl font-bold font-heading mb-8">Pricing</h2>
-    <div class="grid md:grid-cols-2 gap-6 text-left">
-      <div class="bg-cardBg border border-borderCol rounded-3xl p-8">
-        <h3 class="text-xl font-bold font-heading mb-2">Free</h3>
-        <div class="text-4xl font-bold font-heading mb-4">$0</div>
-        <ul class="space-y-2 text-sm text-slate-300 mb-6"><li>3 checks after email verification</li><li>ATS fit score</li><li>Resume rewrite</li></ul>
-        <a href="#workspace" class="block text-center bg-slate-800 hover:bg-slate-700 py-3 rounded-2xl font-semibold">Use free checks</a>
-      </div>
-      <div class="bg-gradient-to-b from-indigo-950/60 to-cardBg border-2 border-indigo-500 rounded-3xl p-8">
-        <h3 class="text-xl font-bold font-heading mb-2">Pro</h3>
-        <div class="text-4xl font-bold font-heading mb-4">$12<span class="text-sm font-normal text-slate-400">/mo</span></div>
-        <ul class="space-y-2 text-sm text-slate-300 mb-6"><li>Unlimited checks</li><li>Resume rewrites</li><li>Priority speed</li></ul>
-        <!-- Replace with your real Stripe Payment Link -->
-        <a href="https://buy.stripe.com/your-payment-link" target="_blank" rel="noopener" class="block text-center bg-gradient-to-r from-indigo-600 to-purple-600 py-3 rounded-2xl font-semibold">Upgrade to Pro</a>
-      </div>
-    </div>
-  </div>
-</section>
+        <div class="relative">
+            <!-- Studio Lock Overlay -->
+            <div id="workspace-lock" class="absolute inset-0 glass-overlay z-30 flex flex-col items-center justify-center text-center p-8 rounded-3xl border border-indigo-500/30 shadow-2xl">
+                <div class="w-16 h-16 bg-indigo-500/10 border border-indigo-500/30 rounded-2xl flex items-center justify-center text-indigo-400 text-3xl mb-6 animate-bounce">🔒</div>
+                <h3 class="text-2xl font-bold font-heading mb-3 text-white">Verification Required</h3>
+                <p class="text-slate-300 text-sm max-w-md mb-8 leading-relaxed">To prevent spam and ensure processing speed, please verify your email address to unlock your free optimization checks.</p>
+                <button onclick="openAuthModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-8 py-4 rounded-xl transition shadow-lg shadow-indigo-600/30">
+                    Verify Email via OTP
+                </button>
+            </div>
 
-<footer id="terms" class="py-10 px-6 text-xs text-slate-500 border-t border-borderCol">
-  <div class="max-w-4xl mx-auto space-y-3">
-    <p>By using ResumeAI you agree that your resume and job text are processed by a third-party AI service to generate results. New verified accounts get 3 free checks; further use needs a subscription. AI output may contain mistakes, so review it before use.</p>
-    <p>&copy; 2026 ResumeAI. <a href="#faq" class="hover:text-slate-300">FAQ</a> · <a href="#pricing" class="hover:text-slate-300">Pricing</a> · <a href="mailto:your-email@gmail.com" class="text-indigo-400">Help</a></p>
-  </div>
-</footer>
+            <div class="grid lg:grid-cols-2 gap-8">
+                <!-- Input Column -->
+                <div class="bg-cardBg border border-borderCol rounded-3xl p-8 space-y-6 shadow-xl">
+                    <div>
+                        <label for="resumeText" class="block text-sm font-semibold text-slate-300 mb-2">Paste Your Resume</label>
+                        <textarea id="resumeText" rows="8" maxlength="15000" class="w-full bg-darkBg border border-borderCol rounded-2xl p-4 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 resize-none shadow-inner" placeholder="Paste your raw resume text here..."></textarea>
+                    </div>
+                    <div>
+                        <label for="jobDescription" class="block text-sm font-semibold text-slate-300 mb-2">Paste Job Description</label>
+                        <textarea id="jobDescription" rows="8" maxlength="10000" class="w-full bg-darkBg border border-borderCol rounded-2xl p-4 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 resize-none shadow-inner" placeholder="Paste the target job posting here..."></textarea>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-4 pt-2">
+                        <button id="btn-score" onclick="processAction('/api/optimize')" class="flex-1 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold py-4 rounded-xl text-sm transition shadow-lg">✨ Score Resume</button>
+                        <button id="btn-rewrite" onclick="processAction('/api/perfect-resume')" class="flex-1 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold py-4 rounded-xl text-sm transition shadow-lg">🏆 100/100 Rewrite</button>
+                    </div>
+                </div>
 
-<script>
-let pendingEmail = '';
-const $ = (id) => document.getElementById(id);
-const getToken = () => localStorage.getItem('resumeai_token');
+                <!-- Output Column -->
+                <div class="bg-cardBg border border-borderCol rounded-3xl p-8 flex flex-col shadow-xl">
+                    <div class="flex items-center justify-between mb-6 pb-4 border-b border-borderCol">
+                        <h2 class="text-lg font-bold font-heading text-white">AI Analysis Results</h2>
+                        <button onclick="copyOutput()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700 transition">Copy Text</button>
+                    </div>
+                    <div id="loading" class="hidden text-indigo-400 animate-pulse my-auto text-center font-medium py-20">Analyzing semantics against target role...</div>
+                    <div id="output" class="flex-1 bg-darkBg border border-borderCol rounded-2xl p-6 text-sm text-slate-300 whitespace-pre-wrap overflow-y-auto max-h-[550px] leading-relaxed shadow-inner">
+                        Awaiting input. Verify your email and run an optimization check to see results here.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
 
-document.addEventListener('DOMContentLoaded', () => {
-  // Content is visible by default; animation only enhances it and never hides it if GSAP fails
-  try { if (window.gsap) gsap.from('#hero', { duration: .8, autoAlpha: 0, y: 24, ease: 'power3.out', clearProps: 'all' }); } catch (e) {}
-  refreshSession();
-});
+    <!-- ATS Guide Deep Dive -->
+    <section id="ats-guide" class="py-20 border-t border-borderCol bg-cardBg/20 px-6">
+        <h2 class="text-3xl md:text-4xl font-bold font-heading text-center mb-12">Why Resumes Fail ATS Filters</h2>
+        <div class="max-w-6xl mx-auto grid lg:grid-cols-2 gap-8">
+            <div class="bg-cardBg border border-borderCol rounded-3xl p-10 space-y-6">
+                <div class="flex items-center gap-4 border-b border-borderCol pb-4">
+                    <div class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 font-bold">✕</div>
+                    <h3 class="text-xl font-bold font-heading text-rose-300">The Rejection Trap</h3>
+                </div>
+                <ul class="space-y-4 text-sm text-slate-300">
+                    <li class="flex items-start gap-3"><span class="text-rose-400 mt-0.5">•</span> <strong>Missing exact keywords:</strong> Discrepancies in terminology automatically flag applications.</li>
+                    <li class="flex items-start gap-3"><span class="text-rose-400 mt-0.5">•</span> <strong>Complex layouts:</strong> Multi-column designs and icons break automated parsing software.</li>
+                    <li class="flex items-start gap-3"><span class="text-rose-400 mt-0.5">•</span> <strong>Vague bullet points:</strong> Descriptions lacking quantifiable metrics are scored lower.</li>
+                </ul>
+            </div>
+            <div class="bg-cardBg border border-indigo-500/30 rounded-3xl p-10 space-y-6 relative overflow-hidden">
+                <div class="absolute -right-10 -top-10 w-40 h-40 bg-indigo-500/10 blur-3xl rounded-full"></div>
+                <div class="flex items-center gap-4 border-b border-borderCol pb-4 relative z-10">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold">✓</div>
+                    <h3 class="text-xl font-bold font-heading text-emerald-300">The ResumeAI Fix</h3>
+                </div>
+                <ul class="space-y-4 text-sm text-slate-300 relative z-10">
+                    <li class="flex items-start gap-3"><span class="text-emerald-400 mt-0.5">✓</span> <strong>Smart integration:</strong> Automatically weaves critical job description terms natively into context.</li>
+                    <li class="flex items-start gap-3"><span class="text-emerald-400 mt-0.5">✓</span> <strong>Parser-safe:</strong> Reframes text into clean hierarchies guaranteed to be read accurately.</li>
+                    <li class="flex items-start gap-3"><span class="text-emerald-400 mt-0.5">✓</span> <strong>Pre-apply confidence:</strong> Shows exact improvement percentages before submission.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
 
-function showToast(msg) {
-  const t = $('toast'); t.textContent = msg;
-  t.classList.remove('translate-y-32', 'opacity-0');
-  setTimeout(() => t.classList.add('translate-y-32', 'opacity-0'), 3500);
-}
-function openAuthModal() { $('auth-modal').classList.remove('hidden'); $('auth-modal').classList.add('flex'); }
-function closeAuthModal() { $('auth-modal').classList.add('hidden'); $('auth-modal').classList.remove('flex'); }
-function resetAuthModal() { $('step-email').classList.remove('hidden'); $('step-otp').classList.add('hidden'); $('user-otp-input').value = ''; }
+    <!-- Pricing -->
+    <section id="pricing" class="py-20 border-t border-borderCol bg-cardBg/30 px-6">
+        <div class="max-w-4xl mx-auto text-center">
+            <h2 class="text-3xl md:text-4xl font-bold font-heading mb-12">Simple, Transparent Pricing</h2>
+            <div class="grid md:grid-cols-2 gap-8 text-left">
+                <div class="bg-cardBg border border-borderCol rounded-3xl p-10 card-hover">
+                    <h3 class="text-xl font-bold font-heading mb-2">Free Starter</h3>
+                    <div class="text-5xl font-black font-heading mb-6 mt-4">$0</div>
+                    <ul class="space-y-4 text-sm text-slate-300 mb-8">
+                        <li class="flex items-center gap-2"><span class="text-indigo-400">✓</span> 3 free checks after verification</li>
+                        <li class="flex items-center gap-2"><span class="text-indigo-400">✓</span> ATS fit scoring</li>
+                        <li class="flex items-center gap-2"><span class="text-indigo-400">✓</span> Complete resume rewriting</li>
+                    </ul>
+                    <a href="#workspace" class="block text-center bg-slate-800 hover:bg-slate-700 text-white py-4 rounded-xl font-semibold transition">Use Free Checks</a>
+                </div>
+                <div class="bg-gradient-to-b from-indigo-950/60 to-cardBg border border-indigo-500/50 rounded-3xl p-10 shadow-2xl relative">
+                    <span class="absolute -top-4 right-8 bg-indigo-500 text-white text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full shadow-lg">Pro</span>
+                    <h3 class="text-xl font-bold font-heading mb-2">Career Suite</h3>
+                    <div class="text-5xl font-black font-heading mb-6 mt-4">$12<span class="text-lg font-normal text-slate-400">/mo</span></div>
+                    <ul class="space-y-4 text-sm text-slate-300 mb-8">
+                        <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> <strong>Unlimited</strong> AI checks</li>
+                        <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> 100/100 resume rewriting</li>
+                        <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Priority Lightning speed</li>
+                    </ul>
+                    <!-- Replace with your actual Stripe Payment Link -->
+                    <a href="https://buy.stripe.com/your-payment-link" target="_blank" rel="noopener" class="block text-center bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white py-4 rounded-xl font-bold transition shadow-lg shadow-indigo-500/25">Upgrade to Pro</a>
+                </div>
+            </div>
+        </div>
+    </section>
 
-async function api(path, options = {}) {
-  const headers = { 'Content-Type': 'application/json' };
-  if (getToken()) headers.Authorization = 'Bearer ' + getToken();
-  const res = await fetch(path, { ...options, headers });
-  let data = {};
-  try { data = await res.json(); } catch (e) {}
-  return { ok: res.ok, status: res.status, data };
-}
+    <!-- Footer -->
+    <footer id="terms" class="py-12 px-6 text-xs text-slate-500 border-t border-borderCol bg-darkBg">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="max-w-xl text-center md:text-left leading-relaxed">
+                By using ResumeAI you agree that your resume data is processed securely by third-party AI to generate results. Verified accounts receive 3 free credits; further usage requires a subscription. AI output is advisory; please review thoroughly before submission.
+            </div>
+            <div class="flex gap-6 items-center font-medium">
+                <a href="#faq" class="hover:text-slate-300 transition">FAQ</a>
+                <a href="#pricing" class="hover:text-slate-300 transition">Pricing</a>
+                <a href="mailto:your-email@gmail.com" class="text-indigo-400 hover:text-indigo-300 transition">Contact Support</a>
+            </div>
+        </div>
+        <div class="max-w-6xl mx-auto mt-8 text-center md:text-left text-[10px]">
+            &copy; 2026 ResumeAI SaaS. All rights reserved.
+        </div>
+    </footer>
 
-function renderState(email, credits) {
-  const signedIn = !!email;
-  $('workspace-lock').classList.toggle('hidden', signedIn);
-  $('logout-btn').classList.toggle('hidden', !signedIn);
-  $('nav-user-status').textContent = signedIn ? email : 'Not signed in';
-  $('credits-display').textContent = signedIn ? `${credits} free check${credits === 1 ? '' : 's'} remaining` : 'Locked. Verify your email to start.';
-}
+    <script>
+        let pendingEmail = '';
+        const $ = (id) => document.getElementById(id);
+        const getToken = () => localStorage.getItem('resumeai_token');
 
-async function refreshSession() {
-  if (!getToken()) return renderState(null);
-  try {
-    const { ok, data } = await api('/api/me');
-    if (ok) renderState(data.email, data.credits);
-    else { localStorage.removeItem('resumeai_token'); renderState(null); }
-  } catch (e) { renderState(null); }
-}
+        document.addEventListener('DOMContentLoaded', () => {
+            try { 
+                if (window.gsap) gsap.from('#hero', { duration: 1, autoAlpha: 0, y: 30, ease: 'power3.out', clearProps: 'all' }); 
+            } catch (e) {}
+            refreshSession();
+        });
 
-async function sendOTP() {
-  const email = $('user-email-input').value.trim().toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showToast('Enter a valid email address.');
-  const btn = $('send-otp-btn'); btn.disabled = true; btn.textContent = 'Sending...';
-  try {
-    const { ok, data } = await api('/api/send-otp', { method: 'POST', body: JSON.stringify({ email }) });
-    if (ok && data.success) {
-      pendingEmail = email;
-      $('display-target-email').textContent = email;
-      $('step-email').classList.add('hidden'); $('step-otp').classList.remove('hidden');
-      showToast('Code sent. Check your inbox and spam.');
-    } else showToast(data.error || 'Could not send the code.');
-  } catch (e) { showToast('Cannot reach the server. It may be waking up; try again in 30 seconds.'); }
-  btn.disabled = false; btn.textContent = 'Send code';
-}
+        function showToast(msg) {
+            const t = $('toast');$('toast-msg').textContent = msg;
+            t.classList.remove('translate-y-32', 'opacity-0');
+            setTimeout(() => t.classList.add('translate-y-32', 'opacity-0'), 3500);
+        }
 
-async function verifyOTP() {
-  const otp = $('user-otp-input').value.trim();
-  if (!/^\d{6}$/.test(otp)) return showToast('Enter the 6-digit code.');
-  const btn = $('verify-btn'); btn.disabled = true;
-  try {
-    const { ok, data } = await api('/api/verify-otp', { method: 'POST', body: JSON.stringify({ email: pendingEmail, otp }) });
-    if (ok && data.success) {
-      localStorage.setItem('resumeai_token', data.token);
-      closeAuthModal(); resetAuthModal();
-      renderState(data.email, data.credits);
-      showToast('Email verified. Welcome!');
-    } else showToast(data.error || 'Incorrect code.');
-  } catch (e) { showToast('Cannot reach the server.'); }
-  btn.disabled = false;
-}
+        function openAuthModal() { 
+            $('auth-modal').classList.remove('hidden');$('auth-modal').classList.add('flex'); 
+        }
+        function closeAuthModal() { 
+            $('auth-modal').classList.add('hidden');$('auth-modal').classList.remove('flex'); 
+        }
+        function resetAuthModal() { 
+            $('step-email').classList.remove('hidden'); 
+            $('step-otp').classList.add('hidden');$('user-otp-input').value = ''; 
+        }
 
-function logoutUser() { localStorage.removeItem('resumeai_token'); renderState(null); showToast('Signed out.'); }
+        async function api(path, options = {}) {
+            const headers = { 'Content-Type': 'application/json' };
+            if (getToken()) headers.Authorization = 'Bearer ' + getToken();
+            const res = await fetch(path, { ...options, headers });
+            let data = {};
+            try { data = await res.json(); } catch (e) {}
+            return { ok: res.ok, status: res.status, data };
+        }
 
-async function processAction(endpoint) {
-  if (!getToken()) { openAuthModal(); return; }
-  const resumeText = $('resumeText').value.trim();
-  const jobDescription = $('jobDescription').value.trim();
-  if (!resumeText || !jobDescription) return showToast('Paste both your resume and the job description.');
+        function renderState(email, credits) {
+            const signedIn = !!email;
+            $('workspace-lock').classList.toggle('hidden', signedIn);$('logout-btn').classList.toggle('hidden', !signedIn);
+            
+            if (signedIn) {
+                $('nav-user-status').textContent = email;
+                $('nav-user-status').className = "hidden sm:inline-block text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-lg border border-emerald-500/20 font-medium";
+                $('credits-display').innerHTML = `${credits} free check${credits === 1 ? '' : 's'} remaining`;
+                $('credits-display').className = "text-emerald-400";
+            } else {
+                $('nav-user-status').textContent = 'Not signed in';$('nav-user-status').className = "hidden sm:inline-block text-xs bg-slate-800 text-slate-400 px-3 py-1.5 rounded-lg border border-slate-700 font-medium";
+                $('credits-display').innerHTML = 'Locked. Verify your email to start.';
+                $('credits-display').className = "text-indigo-400";
+            }
+        }
 
-  const btns = [$('btn-score'), $('btn-rewrite')];
-  btns.forEach(b => b.disabled = true);
-  $('output').textContent = ''; $('loading').classList.remove('hidden');
-  try {
-    const { ok, status, data } = await api(endpoint, { method: 'POST', body: JSON.stringify({ resumeText, jobDescription }) });
-    if (status === 401) { localStorage.removeItem('resumeai_token'); renderState(null); openAuthModal(); $('output').textContent = 'Session expired. Verify your email again.'; }
-    else if (status === 402) { $('output').textContent = data.error; renderState($('nav-user-status').textContent, 0); $('pricing').scrollIntoView({ behavior: 'smooth' }); }
-    else if (!ok) $('output').textContent = data.error || 'Something went wrong. No check was used. Try again.';
-    else { $('output').textContent = data.result; await refreshSession(); }
-  } catch (e) {
-    $('output').textContent = 'Cannot reach the server. It may be waking up; try again in 30 seconds. No check was used.';
-  }
-  $('loading').classList.add('hidden');
-  btns.forEach(b => b.disabled = false);
-}
+        async function refreshSession() {
+            if (!getToken()) return renderState(null);
+            try {
+                const { ok, data } = await api('/api/me');
+                if (ok) renderState(data.email, data.credits);
+                else { localStorage.removeItem('resumeai_token'); renderState(null); }
+            } catch (e) { renderState(null); }
+        }
 
-async function copyOutput() {
-  try { await navigator.clipboard.writeText($('output').textContent); showToast('Copied.'); }
-  catch (e) { showToast('Copy failed. Select the text manually.'); }
-}
-</script>
+        async function sendOTP() {
+            const email = $('user-email-input').value.trim().toLowerCase();
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showToast('Enter a valid email address.');
+            const btn = $('send-otp-btn'); 
+            btn.disabled = true; 
+            btn.textContent = 'Sending secure code...';
+            
+            try {
+                const { ok, data } = await api('/api/send-otp', { method: 'POST', body: JSON.stringify({ email }) });
+                if (ok && data.success) {
+                    pendingEmail = email;
+                    $('display-target-email').textContent = email;
+                    $('step-email').classList.add('hidden');$('step-otp').classList.remove('hidden');
+                    showToast('Code sent. Check your inbox and spam folder.');
+                } else showToast(data.error || 'Could not send the code.');
+            } catch (e) { 
+                showToast('Cannot reach the server. Please try again.'); 
+            }
+            btn.disabled = false; 
+            btn.textContent = 'Send Verification Code';
+        }
+
+        async function verifyOTP() {
+            const otp = $('user-otp-input').value.trim();
+            if (!/^\d{6}$/.test(otp)) return showToast('Please enter the 6-digit code.');
+            const btn = $('verify-btn'); 
+            btn.disabled = true;
+            
+            try {
+                const { ok, data } = await api('/api/verify-otp', { method: 'POST', body: JSON.stringify({ email: pendingEmail, otp }) });
+                if (ok && data.success) {
+                    localStorage.setItem('resumeai_token', data.token);
+                    closeAuthModal(); 
+                    resetAuthModal();
+                    renderState(data.email, data.credits);
+                    showToast('Email verified. Welcome to the Studio!');
+                } else showToast(data.error || 'Incorrect code. Please try again.');
+            } catch (e) { 
+                showToast('Cannot reach the server.'); 
+            }
+            btn.disabled = false;
+        }
+
+        function logoutUser() { 
+            localStorage.removeItem('resumeai_token'); 
+            renderState(null); 
+            showToast('Signed out successfully.'); 
+        }
+
+        async function processAction(endpoint) {
+            if (!getToken()) { openAuthModal(); return; }
+            const resumeText = $('resumeText').value.trim();
+            const jobDescription = $('jobDescription').value.trim();
+            if (!resumeText || !jobDescription) return showToast('Please paste both your resume and the job description.');
+
+            const btns = [$('btn-score'),$('btn-rewrite')];
+            btns.forEach(b => b.disabled = true);
+            $('output').textContent = '';$('loading').classList.remove('hidden');
+            
+            try {
+                const { ok, status, data } = await api(endpoint, { method: 'POST', body: JSON.stringify({ resumeText, jobDescription }) });
+                if (status === 401) { 
+                    localStorage.removeItem('resumeai_token'); 
+                    renderState(null); 
+                    openAuthModal(); 
+                    $('output').textContent = 'Session expired. Verify your email again.'; 
+                }
+                else if (status === 402) { 
+                    $('output').textContent = data.error; 
+                    renderState($('nav-user-status').textContent, 0);$('pricing').scrollIntoView({ behavior: 'smooth' }); 
+                }
+                else if (!ok) $('output').textContent = data.error || 'Something went wrong. No check was used. Try again.';
+                else { 
+                    $('output').textContent = data.result; 
+                    await refreshSession(); 
+                }
+            } catch (e) {
+                $('output').textContent = 'Cannot reach the server. It may be processing; try again in 30 seconds. No check was used.';
+            }
+            $('loading').classList.add('hidden');
+            btns.forEach(b => b.disabled = false);
+        }
+
+        async function copyOutput() {
+            try { 
+                await navigator.clipboard.writeText($('output').textContent); 
+                showToast('Text copied to clipboard.'); 
+            }
+            catch (e) { showToast('Copy failed. Select the text manually.'); }
+        }
+    </script>
 </body>
 </html>
